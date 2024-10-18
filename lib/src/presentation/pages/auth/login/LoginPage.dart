@@ -1,11 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:front_ruedarent_flutter/src/presentation/pages/auth/login/LoginBlocCubit.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/widgets/DefaultTextfield.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
   @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+
+  LoginBlocCubit? _loginBlocCubit;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _loginBlocCubit = LoginBlocCubit();
+  }
+
+  @override
   Widget build(BuildContext context) {
+
+    _loginBlocCubit = BlocProvider.of<LoginBlocCubit>(context, listen: false);
     return Scaffold(
       body: Stack(
         children: [
@@ -58,22 +77,34 @@ class LoginPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
                       // Campo de correo electrónico
-                      DefaultTextfield(
-                          label: "Correo electronico",
-                          icon: Icons.email,
-                          onChanged: (text) {
-                            print('Correo ingresado: ${text}');
-                          },
+                      StreamBuilder(
+                        stream: _loginBlocCubit?.emailStream,
+                        builder: (context, snapshot) {
+                          return DefaultTextfield(
+                              label: "Correo electronico",
+                              icon: Icons.email,
+                              onChanged: (text) {
+                                _loginBlocCubit?.changeEmail(text);
+                                // print('Correo ingresado: ${text}');
+                              },
+                          );
+                        }
                       ),
                       const SizedBox(height: 20),
                       // Campo de contraseña
-                      DefaultTextfield(
-                        label: "Contraseña",
-                        icon: Icons.lock,
-                        isPassword: true,  // Aquí activamos el ocultamiento de texto
-                        onChanged: (text) {
-                          print('Contraseña ingresada: ${text}');
-                        },
+                      StreamBuilder(
+                        stream: _loginBlocCubit?.passwordStream,
+                        builder: (context, snapshot) {
+                          return DefaultTextfield(
+                            label: "Contraseña",
+                            icon: Icons.lock,
+                            isPassword: true,  // Aquí activamos el ocultamiento de texto
+                            onChanged: (text) {
+                              _loginBlocCubit?.changePassword(text);
+                              // print('Contraseña ingresada: ${text}');
+                            },
+                          );
+                        }
                       ),
                       const SizedBox(height: 10),
                       // Enlace de "Has olvidado tu contraseña?"
@@ -95,7 +126,9 @@ class LoginPage extends StatelessWidget {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
-                            Navigator.pushNamed(context, '/home');
+                            // Acción para login
+                            _loginBlocCubit?.login();
+                            // Navigator.pushNamed(context, '/home');
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
