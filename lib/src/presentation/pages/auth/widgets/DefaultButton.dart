@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 class DefaultButton extends StatelessWidget {
-  final VoidCallback onPressed;  // Función que se ejecuta cuando se presiona el botón
+  final VoidCallback? onPressed;  // Función que se ejecuta cuando se presiona el botón
   final String text;  // Texto del botón
   final Color? backgroundColor;  // Color de fondo (opcional)
   final double borderRadius;  // Radio del borde (opcional)
   final double padding;  // Padding del botón
+
 
   const DefaultButton({
     Key? key,
@@ -21,7 +22,7 @@ class DefaultButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: backgroundColor,  // Se permite personalizar el color de fondo
+        backgroundColor: onPressed != null ? backgroundColor : Colors.grey,  // Cambia el color si está deshabilitado
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(borderRadius),  // Borde redondeado personalizado
         ),

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/login/LoginBlocCubit.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/login/LoginPage.dart';
+import 'package:front_ruedarent_flutter/src/presentation/pages/auth/register/RegisterBlocCubit.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/register/RegisterPage.dart';
 
 void main() {
@@ -29,7 +30,8 @@ class MyApp extends StatelessWidget {
         routes: {
           // '/': (context) => const MyHomePage(title: 'Flutter Demo Home Page'),
           '/login': (BuildContext context) => const LoginPage(),
-          '/register': (BuildContext context) => const RegisterPage(),
+          '/register': (BuildContext context) => BlocProvider(
+              create: (context) => RegisterBlocCubit(), child: const RegisterPage()),
         },
       ),
     );
