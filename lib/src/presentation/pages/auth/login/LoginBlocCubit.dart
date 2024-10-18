@@ -85,11 +85,21 @@ class LoginBlocCubit extends Cubit<LoginBlocState> {
   }
 
   // Lógica para manejar el login
-  void login() {
+  Future<bool> login() async{
     final email = _emailController.value;
     final password = _passwordController.value;
     print('Email: $email');
     print('Password: $password');
     // Aquí podrías manejar la lógica del login, por ejemplo, llamar a una API
+    await Future.delayed(Duration(seconds: 2));
+
+    // Aquí deberías hacer la verificación real. Este es un ejemplo simulado:
+    if (email == "test@domain.com" && password == "Password123!") {
+      return true;  // Login exitoso
+    } else {
+      return false;  // Login fallido
+    }
+
+
   }
 }

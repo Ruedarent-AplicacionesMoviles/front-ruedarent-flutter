@@ -66,6 +66,8 @@ flutter:
   assets:
     - assets/images/background.png
     - assets/images/logo.png
+    - assets/images/roles/propietario.jpg
+    - assets/images/roles/rentador.jpg
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
