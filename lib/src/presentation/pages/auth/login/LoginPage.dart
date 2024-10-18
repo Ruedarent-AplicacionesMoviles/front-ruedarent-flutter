@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/login/LoginBlocCubit.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/widgets/DefaultTextfield.dart';
 
@@ -15,10 +16,14 @@ class _LoginPageState extends State<LoginPage> {
   LoginBlocCubit? _loginBlocCubit;
 
   @override
-  void initState() {
-    // TODO: implement initState
+  void initState() { // Ejecuta una sola vez cuando carga la pantalla
     super.initState();
-    _loginBlocCubit = LoginBlocCubit();
+    _loginBlocCubit = BlocProvider.of<LoginBlocCubit>(context, listen: false);
+
+    // WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {
+    //   _loginBlocCubit?.dispose();
+    // });
+
   }
 
   @override
@@ -87,6 +92,7 @@ class _LoginPageState extends State<LoginPage> {
                                 _loginBlocCubit?.changeEmail(text);
                                 // print('Correo ingresado: ${text}');
                               },
+                            errorText: snapshot.error != null ? snapshot.error.toString() : null, // Mostrar errores
                           );
                         }
                       ),
@@ -103,6 +109,7 @@ class _LoginPageState extends State<LoginPage> {
                               _loginBlocCubit?.changePassword(text);
                               // print('Contraseña ingresada: ${text}');
                             },
+                            errorText: snapshot.error != null ? snapshot.error.toString() : null, // Mostrar errores
                           );
                         }
                       ),
@@ -124,25 +131,28 @@ class _LoginPageState extends State<LoginPage> {
                       // Botón de login
                       SizedBox(
                         width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // Acción para login
-                            _loginBlocCubit?.login();
-                            // Navigator.pushNamed(context, '/home');
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30.0),
-                            ),
-                          ),
-                          child: const Padding(
-                            padding: EdgeInsets.all(15.0),
-                            child: Text(
-                              'Login',
-                              style: TextStyle(fontSize: 18),
-                            ),
-                          ),
+                        child: StreamBuilder(
+                          stream: _loginBlocCubit?.formValidStream,
+                          builder: (context, snapshot) {
+                            return ElevatedButton(
+                              onPressed: snapshot.hasData ? () {
+                                _loginBlocCubit?.login();
+                              } : null,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: snapshot.hasData ? Colors.green : Colors.grey,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30.0),
+                                ),
+                              ),
+                              child: const Padding(
+                                padding: EdgeInsets.all(15.0),
+                                child: Text(
+                                  'Login',
+                                  style: TextStyle(fontSize: 18),
+                                ),
+                              ),
+                            );
+                          }
                         ),
                       ),
                       const SizedBox(height: 20),

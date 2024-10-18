@@ -5,6 +5,7 @@ class DefaultTextfield extends StatelessWidget {
   final IconData icon;
   final bool isPassword;
   final Function(String)? onChanged;
+  final String? errorText;  // Añadimos el parámetro nullable para manejar errores
 
   const DefaultTextfield({
     Key? key,
@@ -12,6 +13,7 @@ class DefaultTextfield extends StatelessWidget {
     required this.icon,
     this.onChanged,
     this.isPassword = false,
+    this.errorText,  // Inicializamos el parámetro errorText como opcional
   }) : super(key: key);
 
   @override
@@ -23,6 +25,7 @@ class DefaultTextfield extends StatelessWidget {
         labelText: label,
         prefixIcon: Icon(icon, color: Colors.green),
         border: const OutlineInputBorder(),
+        errorText: errorText,  // Aquí mostramos el mensaje de error si existe
       ),
     );
   }

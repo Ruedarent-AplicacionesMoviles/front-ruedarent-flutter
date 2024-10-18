@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/login/LoginBlocCubit.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/login/LoginPage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/register/RegisterPage.dart';
@@ -17,6 +18,7 @@ class MyApp extends StatelessWidget {
     return BlocProvider(
       create: (context) => LoginBlocCubit(),
       child: MaterialApp(
+        builder: FToastBuilder(),
         title: 'Flutter Demo',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(

@@ -37,6 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_bloc: ^8.1.6
   rxdart: ^0.28.0
+  fluttertoast: ^8.2.8
 
 
 dev_dependencies:
