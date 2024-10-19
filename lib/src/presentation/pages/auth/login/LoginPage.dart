@@ -111,6 +111,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: TextButton(
                           onPressed: () {
                             // Acción para olvidar contraseña
+                            Navigator.pushNamed(context, '/password-recovery');
                           },
                           child: const Text(
                             '¿Has olvidado tu contraseña?',

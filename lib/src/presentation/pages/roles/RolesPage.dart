@@ -33,7 +33,7 @@ class RolesPage extends StatelessWidget {
                   imagePath: 'assets/images/roles/propietario.jpg', // Cambia esto por la imagen correcta
                   label: 'Propietario',
                   onTap: () {
-                    print("Propietario seleccionado");
+                    Navigator.pushNamed(context, '/vehicles-owner');
                   },
                 ),
                 const SizedBox(height: 20), // Reducimos el espacio entre roles
