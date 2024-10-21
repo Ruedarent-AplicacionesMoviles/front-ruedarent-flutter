@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:front_ruedarent_flutter/src/presentation/pages/auth/login/LoginBlocCubit.dart';
-import 'package:front_ruedarent_flutter/src/presentation/pages/auth/widgets/DefaultTextfield.dart';
+import 'LoginBlocCubit.dart';
+import 'LoginBlocState.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,43 +12,42 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  LoginBlocCubit? _loginBlocCubit;
+  late LoginBlocCubit _loginBlocCubit;
 
   @override
   void initState() {
     super.initState();
-    _loginBlocCubit = BlocProvider.of<LoginBlocCubit>(context, listen: false);
+    _loginBlocCubit = BlocProvider.of<LoginBlocCubit>(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    _loginBlocCubit = BlocProvider.of<LoginBlocCubit>(context, listen: false);
     return Scaffold(
-      body: Stack(
-        children: [
-          // Imagen de fondo
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/background.png'), // Asegúrate de tener tu logo aquí
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          // Contenido sobre la imagen
-          SingleChildScrollView(
+      body: BlocConsumer<LoginBlocCubit, LoginBlocState>(
+        listener: (context, state) {
+          if (state is LoginSuccess) {
+            // Navegar a la pantalla de roles después del login exitoso
+            Navigator.pushReplacementNamed(context, '/roles', arguments: state.user);
+          } else if (state is LoginError) {
+            // Mostrar mensaje de error si el login falla
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          }
+        },
+        builder: (context, state) {
+          return SingleChildScrollView(
             child: Column(
               children: [
                 const SizedBox(height: 100), // Espacio superior
-                // Logo en el centro
+                // Logo de la aplicación
                 Center(
                   child: Image.asset(
-                    'assets/images/logo.png', // Asegúrate de tener tu logo aquí
+                    'assets/images/logo.png',
                     height: 150,
                   ),
                 ),
-                const SizedBox(height: 50), // Espacio entre el logo y el formulario
-                // Contenedor con bordes redondeados para el formulario
+                const SizedBox(height: 50), // Espacio entre logo y formulario
                 Container(
                   padding: const EdgeInsets.all(20.0),
                   margin: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -75,42 +74,27 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 20),
                       // Campo de correo electrónico
-                      StreamBuilder(
-                        stream: _loginBlocCubit?.emailStream,
-                        builder: (context, snapshot) {
-                          return DefaultTextfield(
-                            label: "Correo electrónico",
-                            icon: Icons.email,
-                            onChanged: (text) {
-                              _loginBlocCubit?.changeEmail(text);
-                            },
-                            errorText: snapshot.error != null ? snapshot.error.toString() : null, // Mostrar errores
-                          );
-                        },
+                      _buildTextField(
+                        stream: _loginBlocCubit.emailStream,
+                        onChanged: _loginBlocCubit.changeEmail,
+                        labelText: 'Correo electrónico',
+                        icon: Icons.email,
                       ),
                       const SizedBox(height: 20),
                       // Campo de contraseña
-                      StreamBuilder(
-                        stream: _loginBlocCubit?.passwordStream,
-                        builder: (context, snapshot) {
-                          return DefaultTextfield(
-                            label: "Contraseña",
-                            icon: Icons.lock,
-                            isPassword: true,  // Aquí activamos el ocultamiento de texto
-                            onChanged: (text) {
-                              _loginBlocCubit?.changePassword(text);
-                            },
-                            errorText: snapshot.error != null ? snapshot.error.toString() : null, // Mostrar errores
-                          );
-                        },
+                      _buildTextField(
+                        stream: _loginBlocCubit.passwordStream,
+                        onChanged: _loginBlocCubit.changePassword,
+                        labelText: 'Contraseña',
+                        icon: Icons.lock,
+                        isPassword: true,
                       ),
                       const SizedBox(height: 10),
-                      // Enlace de "Has olvidado tu contraseña?"
+                      // Enlace para olvidar la contraseña
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: () {
-                            // Acción para olvidar contraseña
                             Navigator.pushNamed(context, '/password-recovery');
                           },
                           child: const Text(
@@ -123,57 +107,39 @@ class _LoginPageState extends State<LoginPage> {
                       // Botón de login
                       SizedBox(
                         width: double.infinity,
-                        child: StreamBuilder(
-                          stream: _loginBlocCubit?.formValidStream,
+                        child: StreamBuilder<bool>(
+                          stream: _loginBlocCubit.formValidStream,
                           builder: (context, snapshot) {
                             return ElevatedButton(
                               onPressed: snapshot.hasData
-                                  ? () async {
-                                // Mostrar mensaje de inicio de sesión
-                                Fluttertoast.showToast(
-                                  msg: "Iniciando sesión...",
-                                  toastLength: Toast.LENGTH_SHORT,
-                                  gravity: ToastGravity.BOTTOM,
-                                  timeInSecForIosWeb: 1,
-                                  backgroundColor: Colors.green,
-                                  textColor: Colors.white,
-                                  fontSize: 16.0,
-                                );
-
-                                // Llamar al método login asíncrono del cubit
-                                bool loginSuccess = await _loginBlocCubit?.login() ?? false;
-
-                                // Si el login es exitoso, navegar a la página de roles
-                                if (loginSuccess) {
-                                  Navigator.pushNamed(context, '/roles');
-                                } else {
-                                  // Mostrar mensaje de error en caso de fallo en el login
-                                  Fluttertoast.showToast(
-                                    msg: "Error en el inicio de sesión. Por favor, inténtelo de nuevo.",
-                                    toastLength: Toast.LENGTH_SHORT,
-                                    gravity: ToastGravity.BOTTOM,
-                                    backgroundColor: Colors.red,
-                                    textColor: Colors.white,
-                                    fontSize: 16.0,
-                                  );
-                                }
+                                  ? () {
+                                _loginBlocCubit.login();
                               }
-                                  : null, // Deshabilitar el botón si no es válido
+                                  : null,
+                              child: const Text('Login'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: snapshot.hasData ? Colors.green : Colors.grey,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30.0),
                                 ),
                               ),
-                              child: const Padding(
-                                padding: EdgeInsets.all(15.0),
-                                child: Text(
-                                  'Login',
-                                  style: TextStyle(fontSize: 18),
-                                ),
-                              ),
                             );
                           },
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      // Botón de login automático para TestUser
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // Login automático para TestUser
+                            _loginBlocCubit.login(isTestUser: true);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue, // Puedes cambiar el color si lo prefieres
+                          ),
+                          child: const Text('Login como TestUser'),
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -184,7 +150,6 @@ class _LoginPageState extends State<LoginPage> {
                           const Text('¿No tienes cuenta?'),
                           TextButton(
                             onPressed: () {
-                              // Acción para registro
                               Navigator.pushNamed(context, '/register');
                             },
                             child: const Text(
@@ -199,9 +164,36 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ],
             ),
-          ),
-        ],
+          );
+        },
       ),
+    );
+  }
+
+  // Método para construir campos de texto
+  Widget _buildTextField({
+    required Stream<String> stream,
+    required Function(String) onChanged,
+    required String labelText,
+    IconData? icon,
+    bool isPassword = false,
+  }) {
+    return StreamBuilder<String>(
+      stream: stream,
+      builder: (context, snapshot) {
+        return TextField(
+          onChanged: onChanged,
+          obscureText: isPassword,
+          decoration: InputDecoration(
+            labelText: labelText,
+            prefixIcon: icon != null ? Icon(icon) : null,
+            filled: true,
+            fillColor: const Color(0xFFDFF2D8),
+            border: const OutlineInputBorder(),
+            errorText: snapshot.error?.toString(),
+          ),
+        );
+      },
     );
   }
 }

@@ -1,91 +1,78 @@
 import 'package:flutter/material.dart';
+import '../../../data/models/user_model.dart';
 
 class RolesPage extends StatelessWidget {
-  const RolesPage({super.key});
+  final UserModel user;
+
+  const RolesPage({super.key, required this.user});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Rol'),
-        backgroundColor: Colors.green, // Color del AppBar
+        title: const Text('Selecciona un rol'),
+        backgroundColor: Colors.green,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView( // Envolvemos en un scroll por si el contenido es largo
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start, // Alinea los elementos hacia arriba
-              crossAxisAlignment: CrossAxisAlignment.center, // Centra horizontalmente
-              children: [
-                const SizedBox(height: 20),
-                const Text(
-                  'Selecciona un rol',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 40),
-                // Propietario Role
-                _buildRoleOption(
-                  context,
-                  imagePath: 'assets/images/roles/propietario.jpg', // Cambia esto por la imagen correcta
-                  label: 'Propietario',
-                  onTap: () {
-                    Navigator.pushNamed(context, '/vehicles-owner');
-                    print("Propietario seleccionado");
-                  },
-                ),
-                const SizedBox(height: 20), // Reducimos el espacio entre roles
-                // Rentador Role
-                _buildRoleOption(
-                  context,
-                  imagePath: 'assets/images/roles/rentador.jpg', // Cambia esto por la imagen correcta
-                  label: 'Rentador',
-                  onTap: () {
-                    print("Rentador seleccionado");
-                  },
-                ),
-              ],
-            ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              const Text(
+                'Selecciona un rol',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 40),
+              _buildRoleOption(
+                context,
+                imagePath: 'assets/images/roles/propietario.jpg',
+                label: 'Propietario',
+                onTap: () {
+                  Navigator.pushNamed(context, '/vehicles-owner');
+                },
+              ),
+              const SizedBox(height: 20),
+              _buildRoleOption(
+                context,
+                imagePath: 'assets/images/roles/rentador.jpg',
+                label: 'Rentador',
+                onTap: () {
+                  print("Rentador seleccionado");
+                },
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  // Widget reutilizable para cada opción de rol
   Widget _buildRoleOption(BuildContext context, {required String imagePath, required String label, required VoidCallback onTap}) {
     return Column(
       children: [
         GestureDetector(
           onTap: onTap,
           child: CircleAvatar(
-            radius: 80, // Ajuste del tamaño de la imagen circular
+            radius: 80,
             backgroundImage: AssetImage(imagePath),
           ),
         ),
         const SizedBox(height: 20),
-        SizedBox(
-          width: 150, // Ajuste del tamaño del botón
-          child: ElevatedButton(
-            onPressed: onTap,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green, // Color del botón verde como en el Figma
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0), // Borde redondeado
-              ),
+        ElevatedButton(
+          onPressed: onTap,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10.0),
             ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12.0), // Espaciado interno del botón
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 18, // Tamaño de letra mayor
-                  color: Colors.white,
-                ),
-              ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12.0),
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 18, color: Colors.white),
             ),
           ),
         ),

@@ -62,6 +62,13 @@ class DatabaseHelper {
         notificationPreferences TEXT
       )
     ''');
+    await db.insert('User', {
+      'name': 'Test User',
+      'email': 'testuser@domain.com',
+      'password': 'Password123!',
+      'userType': 'owner',  // O 'owner', según lo que prefieras
+      'notificationPreferences': 'all',
+    });
 
     await db.execute('''
       CREATE TABLE Vehicle (

@@ -1,7 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rxdart/rxdart.dart';
+import '../../../../data/models/user_model.dart';
+import '../../../../data/repositories/user_repository.dart';
 import 'RegisterBlocState.dart';
-
+import 'package:sqflite/sqflite.dart';
 class RegisterBlocCubit extends Cubit<RegisterBlocState> {
   RegisterBlocCubit() : super(RegisterInitial());
 
@@ -45,49 +47,32 @@ class RegisterBlocCubit extends Cubit<RegisterBlocState> {
   }
 
   void changeEmail(String email) {
-    // Expresión regular general para validar correos electrónicos
     RegExp emailRegExp = RegExp(
       r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
     );
 
-    // Validar longitud mínima
     if (email.length < 3) {
       _emailController.sink.addError('El email debe tener más de 3 caracteres');
-    }
-    // Validar formato del email
-    else if (!emailRegExp.hasMatch(email)) {
+    } else if (!emailRegExp.hasMatch(email)) {
       _emailController.sink.addError('El email debe ser válido (ej: usuario@dominio.com)');
-    }
-    // Si todo es correcto
-    else {
-      _emailController.sink.add(email);  // Si el email es válido, lo agregamos al stream
+    } else {
+      _emailController.sink.add(email);
     }
   }
 
   void changePassword(String password) {
-    // Verificar longitud mínima
     if (password.length < 6) {
       _passwordController.sink.addError('Al menos 6 caracteres');
-    }
-    // Verificar si contiene al menos una letra mayúscula
-    else if (!password.contains(RegExp(r'[A-Z]'))) {
+    } else if (!password.contains(RegExp(r'[A-Z]'))) {
       _passwordController.sink.addError('Debe contener una mayúscula');
-    }
-    // Verificar si contiene al menos una letra minúscula
-    else if (!password.contains(RegExp(r'[a-z]'))) {
+    } else if (!password.contains(RegExp(r'[a-z]'))) {
       _passwordController.sink.addError('Debe contener una minúscula');
-    }
-    // Verificar si contiene al menos un número
-    else if (!password.contains(RegExp(r'[0-9]'))) {
+    } else if (!password.contains(RegExp(r'[0-9]'))) {
       _passwordController.sink.addError('Debe contener un número');
-    }
-    // Verificar si contiene al menos un carácter especial
-    else if (!password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
+    } else if (!password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
       _passwordController.sink.addError('Debe contener un carácter especial');
-    }
-    // Si todo es correcto
-    else {
-      _passwordController.sink.add(password);  // Si la contraseña es válida, lo agregamos al stream
+    } else {
+      _passwordController.sink.add(password);
     }
   }
 
@@ -109,12 +94,41 @@ class RegisterBlocCubit extends Cubit<RegisterBlocState> {
         (name, surname, email, password, confirmPassword) => true,
   );
 
+  // Método para registrar un usuario en la base de datos
+  Future<void> register() async {
+    try {
+      emit(RegisterLoading());
+
+      UserRepository userRepo = UserRepository();
+      UserModel newUser = UserModel(
+        name: _nameController.value.trim(),
+        email: _emailController.value.trim(),
+        password: _passwordController.value.trim(),
+        userType: 'renter', // Puedes modificar según tu lógica de negocio
+        notificationPreferences: 'all', // Modificar según tu lógica
+      );
+
+      UserModel? existingUser = await userRepo.getUserByEmail(newUser.email);
+      if (existingUser != null) {
+        emit(RegisterError('El correo electrónico ya está registrado.'));
+        return;
+      }
+
+      await userRepo.insertUser(newUser);
+      emit(RegisterSuccess());
+    } catch (e) {
+      emit(RegisterError('Error al registrar el usuario: $e'));
+    }
+  }
+
   // Método para limpiar los streams
-  void dispose() {
+  @override
+  Future<void> close() {
     _nameController.close();
     _surnameController.close();
     _emailController.close();
     _passwordController.close();
     _confirmPasswordController.close();
+    return super.close();
   }
 }
