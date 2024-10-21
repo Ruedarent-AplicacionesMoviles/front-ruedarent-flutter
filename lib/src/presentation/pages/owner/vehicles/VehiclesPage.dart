@@ -10,7 +10,7 @@ class VehiclesPage extends StatefulWidget {
 }
 
 class _VehiclesPageState extends State<VehiclesPage> {
-  List<VehicleTypeModel> vehicleTypes = []; // Cambia el tipo a VehicleTypeModel
+  List<VehicleTypeModel> vehicleTypes = [];
 
   @override
   void initState() {
@@ -20,18 +20,18 @@ class _VehiclesPageState extends State<VehiclesPage> {
 
   // Método para cargar los tipos de vehículos desde la base de datos
   Future<void> _loadVehicleTypes() async {
-    final data = await VehicleTypeRepository().getVehicleTypes(); // Obtener los tipos de vehículos desde el repositorio
+    final data = await VehicleTypeRepository().getVehicleTypes();
     setState(() {
-      vehicleTypes = data.map((e) => VehicleTypeModel.fromMap(e)).toList(); // Mapear los datos a VehicleTypeModel
+      vehicleTypes = data.map((e) => VehicleTypeModel.fromMap(e)).toList();
     });
   }
 
   // Método para eliminar un tipo de vehículo de la base de datos y de la lista visual
   Future<void> _deleteVehicleType(int index) async {
-    int id = vehicleTypes[index].id!; // Obtener el id del tipo de vehículo
-    await VehicleTypeRepository().deleteVehicleType(id); // Eliminar de la base de datos
+    int id = vehicleTypes[index].id!;
+    await VehicleTypeRepository().deleteVehicleType(id);
     setState(() {
-      vehicleTypes.removeAt(index); // Remover de la lista visual
+      vehicleTypes.removeAt(index);
     });
   }
 
@@ -46,14 +46,14 @@ class _VehiclesPageState extends State<VehiclesPage> {
             TextButton(
               child: const Text('Cancelar'),
               onPressed: () {
-                Navigator.of(context).pop(); // Cierra el cuadro de diálogo
+                Navigator.of(context).pop();
               },
             ),
             TextButton(
               child: const Text('Eliminar'),
               onPressed: () {
-                _deleteVehicleType(index); // Llamar al método para eliminar el tipo de vehículo
-                Navigator.of(context).pop(); // Cerrar el cuadro de diálogo
+                _deleteVehicleType(index);
+                Navigator.of(context).pop();
               },
             ),
           ],
@@ -126,7 +126,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    vehicleTypes[index].info ?? '', // Muestra la información de la categoría
+                                    vehicleTypes[index].info ?? '',
                                     style: const TextStyle(fontSize: 16),
                                   ),
                                 ],
@@ -137,17 +137,23 @@ class _VehiclesPageState extends State<VehiclesPage> {
                                 IconButton(
                                   icon: const Icon(Icons.delete, color: Colors.green),
                                   onPressed: () {
-                                    _showDeleteDialog(context, index); // Mostrar el diálogo de confirmación
+                                    _showDeleteDialog(context, index);
                                   },
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.edit, color: Colors.green),
-                                  onPressed: () {
-                                    Navigator.pushNamed(
+                                  onPressed: () async {
+                                    // Navegar a la página de edición y pasar el vehículo a editar
+                                    final result = await Navigator.pushNamed(
                                       context,
-                                      '/edit-category',
-                                      arguments: vehicleTypes[index],  // Pasar el tipo de vehículo a editar
+                                      '/edit-vehicle',
+                                      arguments: vehicleTypes[index], // Pasar el tipo de vehículo seleccionado a editar
                                     );
+
+                                    // Verificar si se ha realizado algún cambio
+                                    if (result == true) {
+                                      _loadVehicleTypes(); // Recargar la lista de tipos de vehículos si se actualizó uno
+                                    }
                                   },
                                 ),
                               ],
@@ -181,7 +187,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1, // Establecer el índice actual de la pestaña seleccionada
+        currentIndex: 1,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.star_border),

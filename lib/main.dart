@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:front_ruedarent_flutter/src/data/models/vehicle_type_model.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/login/LoginBlocCubit.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/login/LoginPage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/passwordRecovery/PasswordRecoveryPage.dart';
@@ -28,9 +28,6 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Flutter Demo',
         debugShowCheckedModeBanner: false,
-        builder: (context, child) {
-          return FToastBuilder()(context, child);
-        },
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,
@@ -43,16 +40,14 @@ class MyApp extends StatelessWidget {
             child: const RegisterPage(),
           ),
           '/roles': (BuildContext context) => const RolesPage(),
-          '/password-recovery': (BuildContext context) =>
-              PasswordRecoveryPage(),
+          '/password-recovery': (BuildContext context) => PasswordRecoveryPage(),
           '/vehicles-owner': (BuildContext context) => VehiclesPage(),
-          '/scooter-category': (BuildContext context) =>
-          ScooterCategoryPage(),
-          '/bike-category': (BuildContext context) =>
-          BikeCategoryPage(),
-          '/add-vehicle': (BuildContext context) =>  AddVehiclePage(),
-          '/edit-vehicle': (BuildContext context) =>
-          EditCategoryPage(),
+          '/scooter-category': (BuildContext context) => ScooterCategoryPage(),
+          '/bike-category': (BuildContext context) => BikeCategoryPage(),
+          '/add-vehicle': (BuildContext context) => AddVehiclePage(),
+          '/edit-vehicle': (BuildContext context) => EditCategoryPage(
+            vehicleType: ModalRoute.of(context)!.settings.arguments as VehicleTypeModel,
+          ),
           '/add-category': (BuildContext context) => AddCategoryPage(),
         },
       ),
