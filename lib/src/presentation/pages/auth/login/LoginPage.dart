@@ -4,6 +4,8 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/login/LoginBlocCubit.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/widgets/DefaultTextfield.dart';
 
+import '../../../../data/models/user_model.dart';
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -18,11 +20,33 @@ class _LoginPageState extends State<LoginPage> {
   void initState() {
     super.initState();
     _loginBlocCubit = BlocProvider.of<LoginBlocCubit>(context, listen: false);
+
+    // Inserta el usuario de prueba y verifica si fue insertado correctamente
+    _insertTestUser();
+  }
+
+  // Método para insertar un usuario de prueba y verificar el resultado
+  // Método para insertar un usuario de prueba
+  void _insertTestUser() async {
+    UserModel testUser = UserModel(
+      name: 'Test User',
+      email: 'test1@gmail.com',
+      password: 'Test#12',
+      userType: 'renter',
+      notificationPreferences: 'all',
+    );
+
+    // Inserta el usuario y verifica si fue exitoso
+    await _loginBlocCubit?.insertTestUser(testUser);
+
+    // Imprime todos los usuarios después de la inserción
+    print('Usuarios después de insertar el usuario de prueba:');
+    _loginBlocCubit?.printAllUsers();
   }
 
   @override
   Widget build(BuildContext context) {
-    _loginBlocCubit = BlocProvider.of<LoginBlocCubit>(context, listen: false);
+    // Elimina la asignación redundante de _loginBlocCubit
     return Scaffold(
       body: Stack(
         children: [
@@ -30,7 +54,7 @@ class _LoginPageState extends State<LoginPage> {
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/images/background.png'), // Asegúrate de tener tu logo aquí
+                image: AssetImage('assets/images/background.png'),
                 fit: BoxFit.cover,
               ),
             ),
@@ -84,7 +108,7 @@ class _LoginPageState extends State<LoginPage> {
                             onChanged: (text) {
                               _loginBlocCubit?.changeEmail(text);
                             },
-                            errorText: snapshot.error != null ? snapshot.error.toString() : null, // Mostrar errores
+                            errorText: snapshot.error != null ? snapshot.error.toString() : null,
                           );
                         },
                       ),
@@ -96,11 +120,11 @@ class _LoginPageState extends State<LoginPage> {
                           return DefaultTextfield(
                             label: "Contraseña",
                             icon: Icons.lock,
-                            isPassword: true,  // Aquí activamos el ocultamiento de texto
+                            isPassword: true, // Aquí activamos el ocultamiento de texto
                             onChanged: (text) {
                               _loginBlocCubit?.changePassword(text);
                             },
-                            errorText: snapshot.error != null ? snapshot.error.toString() : null, // Mostrar errores
+                            errorText: snapshot.error != null ? snapshot.error.toString() : null,
                           );
                         },
                       ),
@@ -110,7 +134,6 @@ class _LoginPageState extends State<LoginPage> {
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: () {
-                            // Acción para olvidar contraseña
                             Navigator.pushNamed(context, '/password-recovery');
                           },
                           child: const Text(
@@ -129,25 +152,21 @@ class _LoginPageState extends State<LoginPage> {
                             return ElevatedButton(
                               onPressed: snapshot.hasData
                                   ? () async {
-                                // Mostrar mensaje de inicio de sesión
                                 Fluttertoast.showToast(
                                   msg: "Iniciando sesión...",
                                   toastLength: Toast.LENGTH_SHORT,
                                   gravity: ToastGravity.BOTTOM,
-                                  timeInSecForIosWeb: 1,
                                   backgroundColor: Colors.green,
                                   textColor: Colors.white,
                                   fontSize: 16.0,
                                 );
 
-                                // Llamar al método login asíncrono del cubit
+                                // Llamar al método login
                                 bool loginSuccess = await _loginBlocCubit?.login() ?? false;
 
-                                // Si el login es exitoso, navegar a la página de roles
                                 if (loginSuccess) {
                                   Navigator.pushNamed(context, '/roles');
                                 } else {
-                                  // Mostrar mensaje de error en caso de fallo en el login
                                   Fluttertoast.showToast(
                                     msg: "Error en el inicio de sesión. Por favor, inténtelo de nuevo.",
                                     toastLength: Toast.LENGTH_SHORT,
@@ -158,7 +177,7 @@ class _LoginPageState extends State<LoginPage> {
                                   );
                                 }
                               }
-                                  : null, // Deshabilitar el botón si no es válido
+                                  : null,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: snapshot.hasData ? Colors.green : Colors.grey,
                                 shape: RoundedRectangleBorder(
@@ -184,7 +203,6 @@ class _LoginPageState extends State<LoginPage> {
                           const Text('¿No tienes cuenta?'),
                           TextButton(
                             onPressed: () {
-                              // Acción para registro
                               Navigator.pushNamed(context, '/register');
                             },
                             child: const Text(

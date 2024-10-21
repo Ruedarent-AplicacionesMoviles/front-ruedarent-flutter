@@ -1,9 +1,15 @@
+// src/presentation/pages/auth/register/RegisterBlocCubit.dart
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rxdart/rxdart.dart';
+import '../../../../data/models/user_model.dart';
+import '../../../../data/repositories/user_repository.dart';
 import 'RegisterBlocState.dart';
 
 class RegisterBlocCubit extends Cubit<RegisterBlocState> {
-  RegisterBlocCubit() : super(RegisterInitial());
+  final UserRepository _userRepository;
+
+  RegisterBlocCubit(this._userRepository) : super(RegisterInitial());
 
   // Controladores de los campos
   final _nameController = BehaviorSubject<String>();
@@ -60,7 +66,7 @@ class RegisterBlocCubit extends Cubit<RegisterBlocState> {
     }
     // Si todo es correcto
     else {
-      _emailController.sink.add(email);  // Si el email es válido, lo agregamos al stream
+      _emailController.sink.add(email); // Si el email es válido, lo agregamos al stream
     }
   }
 
@@ -87,12 +93,18 @@ class RegisterBlocCubit extends Cubit<RegisterBlocState> {
     }
     // Si todo es correcto
     else {
-      _passwordController.sink.add(password);  // Si la contraseña es válida, lo agregamos al stream
+      _passwordController.sink.add(password); // Si la contraseña es válida, lo agregamos al stream
+      // Verificar si la confirmación de contraseña coincide
+      if (_confirmPasswordController.hasValue) {
+        changeConfirmPassword(_confirmPasswordController.value);
+      }
     }
   }
 
   void changeConfirmPassword(String confirmPassword) {
-    if (confirmPassword != _passwordController.value) {
+    if (!_passwordController.hasValue) {
+      _confirmPasswordController.sink.addError('Primero ingresa la contraseña');
+    } else if (confirmPassword != _passwordController.value) {
       _confirmPasswordController.sink.addError('Las contraseñas no coinciden');
     } else {
       _confirmPasswordController.sink.add(confirmPassword);
@@ -116,5 +128,44 @@ class RegisterBlocCubit extends Cubit<RegisterBlocState> {
     _emailController.close();
     _passwordController.close();
     _confirmPasswordController.close();
+  }
+
+  // Lógica para manejar el registro
+  Future<bool> register() async {
+    emit(RegisterLoading());
+
+    try {
+      final name = _nameController.value;
+      final surname = _surnameController.value;
+      final email = _emailController.value;
+      final password = _passwordController.value;
+      final userType = 'renter'; // Puedes ajustar según la lógica de selección de roles
+      final notificationPreferences = 'email'; // Por defecto, puedes ajustar según la lógica
+
+      // Verificar si el email ya está registrado
+      UserModel? existingUser = await _userRepository.getUserByEmail(email);
+      if (existingUser != null) {
+        emit(RegisterFailure('El correo electrónico ya está registrado'));
+        return false; // Email ya existe
+      }
+
+      // Crear el modelo de usuario
+      UserModel user = UserModel(
+        name: '$name $surname',
+        email: email,
+        password: password, // En una aplicación real, debes hashear la contraseña
+        userType: userType,
+        notificationPreferences: notificationPreferences,
+      );
+
+      // Insertar el usuario en la base de datos
+      await _userRepository.insertUser(user);
+
+      emit(RegisterSuccess());
+      return true; // Registro exitoso
+    } catch (e) {
+      emit(RegisterFailure('Error en el registro: $e'));
+      return false; // Error en el registro
+    }
   }
 }
