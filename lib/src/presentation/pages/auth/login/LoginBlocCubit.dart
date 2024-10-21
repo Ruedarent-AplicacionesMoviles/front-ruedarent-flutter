@@ -99,5 +99,7 @@ class LoginBlocCubit extends Cubit<LoginBlocState> {
     } else {
       return false;  // Login fallido
     }
+
+
   }
 }
