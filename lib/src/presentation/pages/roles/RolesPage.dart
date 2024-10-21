@@ -34,6 +34,7 @@ class RolesPage extends StatelessWidget {
                   label: 'Propietario',
                   onTap: () {
                     Navigator.pushNamed(context, '/vehicles-owner');
+                    print("Propietario seleccionado");
                   },
                 ),
                 const SizedBox(height: 20), // Reducimos el espacio entre roles

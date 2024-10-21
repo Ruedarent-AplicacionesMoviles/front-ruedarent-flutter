@@ -72,6 +72,12 @@ class VehicleTypeRepository {
     return null;  // Retorna null si no encuentra el tipo de vehículo
   }
 
+  // Obtener el ID del tipo de vehículo por nombre
+  Future<int> getVehicleTypeIdByName(String name) async {
+    final vehicleType = await getVehicleTypeByName(name);
+    return vehicleType?.id ?? -1; // Retorna el ID o -1 si no se encuentra
+  }
+
   // Verificar si existe un tipo de vehículo por nombre
   Future<bool> existsVehicleTypeByName(String name) async {
     final db = await _databaseHelper.database;

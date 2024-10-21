@@ -7,6 +7,8 @@ class AddCategoryPage extends StatelessWidget {
   final TextEditingController _infoController = TextEditingController();
   final TextEditingController _imageController = TextEditingController();
 
+  AddCategoryPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

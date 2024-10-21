@@ -140,5 +140,6 @@ class DatabaseHelper {
   Future close() async {
     final db = await database;
     db.close();
+    _database = null; // Restablecer la instancia de la base de datos
   }
 }

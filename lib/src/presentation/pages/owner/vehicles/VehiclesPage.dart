@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:front_ruedarent_flutter/src/data/models/vehicle_type_model.dart';
 import 'package:front_ruedarent_flutter/src/data/repositories/vehicle_type_repository.dart';
+import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/categories/CategoryVehiclesPage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/categories/bike/BikeCategoryPage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/categories/scooter/ScooterCategoryPage.dart';
 
 class VehiclesPage extends StatefulWidget {
+  const VehiclesPage({super.key});
+
   @override
   _VehiclesPageState createState() => _VehiclesPageState();
 }
@@ -79,22 +82,15 @@ class _VehiclesPageState extends State<VehiclesPage> {
                 itemBuilder: (context, index) {
                   return GestureDetector(
                     onTap: () {
-                      // Navegar a la página correspondiente según el tipo de vehículo
-                      if (vehicleTypes[index].name == 'Scooter Electrónico') {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ScooterCategoryPage(),
+                      // Navegar a la página de vehículos de la categoría seleccionada
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CategoryVehiclesPage(
+                            categoryName: vehicleTypes[index].name,
                           ),
-                        );
-                      } else if (vehicleTypes[index].name == 'Bike') {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => BikeCategoryPage(),
-                          ),
-                        );
-                      }
+                        ),
+                      );
                     },
                     child: Card(
                       margin: const EdgeInsets.symmetric(vertical: 10.0),
@@ -143,11 +139,11 @@ class _VehiclesPageState extends State<VehiclesPage> {
                                 IconButton(
                                   icon: const Icon(Icons.edit, color: Colors.green),
                                   onPressed: () async {
-                                    // Navegar a la página de edición y pasar el vehículo a editar
+                                    // Navegar a la página de edición y pasar el tipo de vehículo seleccionado a editar
                                     final result = await Navigator.pushNamed(
                                       context,
-                                      '/edit-vehicle',
-                                      arguments: vehicleTypes[index], // Pasar el tipo de vehículo seleccionado a editar
+                                      '/edit-category-vehicle',
+                                      arguments: vehicleTypes[index], // Pasar el tipo de vehículo a editar
                                     );
 
                                     // Verificar si se ha realizado algún cambio
@@ -169,7 +165,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
             ElevatedButton(
               onPressed: () async {
                 // Navegar a la página para agregar un nuevo tipo de vehículo y esperar el resultado
-                final result = await Navigator.pushNamed(context, '/add-category');
+                final result = await Navigator.pushNamed(context, '/add-category-vehicle');
 
                 // Verificar si se ha añadido un nuevo tipo de vehículo
                 if (result == true) {

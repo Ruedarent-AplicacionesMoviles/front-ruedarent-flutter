@@ -1,8 +1,7 @@
-// src/data/repositories/vehicle_repository.dart
-
 import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
 import '../models/vehicle_model.dart';
+import '../repositories/vehicle_type_repository.dart'; // Importa el repositorio de tipos de vehículos
 
 class VehicleRepository {
   final DatabaseHelper _databaseHelper = DatabaseHelper();
@@ -90,9 +89,11 @@ class VehicleRepository {
     List<dynamic> whereArgs = [];
 
     if (type != null) {
-      whereClause += 'vehicleTypeId = ? AND ';
-      // Debes convertir el nombre del tipo a su ID
-      // Esto requeriría una consulta previa al VehicleTypeRepository
+      int vehicleTypeId = await _getVehicleTypeIdByName(type); // Llama al método
+      if (vehicleTypeId != -1) { // Solo agrega la cláusula si se encontró el ID
+        whereClause += 'vehicleTypeId = ? AND ';
+        whereArgs.add(vehicleTypeId);
+      }
     }
     if (location != null) {
       whereClause += 'location LIKE ? AND ';
@@ -125,5 +126,12 @@ class VehicleRepository {
     return List.generate(maps.length, (i) {
       return VehicleModel.fromMap(maps[i]);
     });
+  }
+
+  // Método adicional para obtener el ID del tipo de vehículo por nombre
+  Future<int> _getVehicleTypeIdByName(String name) async {
+    final vehicleTypeRepository = VehicleTypeRepository();
+    final vehicleType = await vehicleTypeRepository.getVehicleTypeByName(name);
+    return vehicleType?.id ?? -1; // Retorna -1 si no se encuentra
   }
 }

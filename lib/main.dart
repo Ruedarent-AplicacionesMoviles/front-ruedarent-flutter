@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:front_ruedarent_flutter/src/data/models/vehicle_model.dart';
 import 'package:front_ruedarent_flutter/src/data/models/vehicle_type_model.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/login/LoginBlocCubit.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/login/LoginPage.dart';
@@ -7,11 +8,10 @@ import 'package:front_ruedarent_flutter/src/presentation/pages/auth/passwordReco
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/register/RegisterBlocCubit.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/register/RegisterPage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/AddCategoryPage.dart';
-import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/AddVehiclePage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/EditCategoryPage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/VehiclesPage.dart';
-import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/categories/bike/BikeCategoryPage.dart';
-import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/categories/scooter/ScooterCategoryPage.dart';
+import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/vehicle/AddVehiclePage.dart';
+import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/vehicle/EditVehiclePage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/roles/RolesPage.dart';
 
 void main() {
@@ -34,21 +34,39 @@ class MyApp extends StatelessWidget {
         ),
         initialRoute: '/login',
         routes: {
-          '/login': (BuildContext context) => const LoginPage(),
-          '/register': (BuildContext context) => BlocProvider(
+          '/login': (context) => const LoginPage(),
+          '/register': (context) => BlocProvider(
             create: (context) => RegisterBlocCubit(),
             child: const RegisterPage(),
           ),
-          '/roles': (BuildContext context) => const RolesPage(),
-          '/password-recovery': (BuildContext context) => PasswordRecoveryPage(),
-          '/vehicles-owner': (BuildContext context) => VehiclesPage(),
-          '/scooter-category': (BuildContext context) => ScooterCategoryPage(),
-          '/bike-category': (BuildContext context) => BikeCategoryPage(),
-          '/add-vehicle': (BuildContext context) => AddVehiclePage(),
-          '/edit-vehicle': (BuildContext context) => EditCategoryPage(
-            vehicleType: ModalRoute.of(context)!.settings.arguments as VehicleTypeModel,
-          ),
-          '/add-category': (BuildContext context) => AddCategoryPage(),
+          '/roles': (context) => const RolesPage(),
+          '/password-recovery': (context) => PasswordRecoveryPage(),
+          '/vehicles-owner': (context) => const VehiclesPage(),
+          '/add-vehicle': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments;
+            if (args is Map<String, dynamic> && args.containsKey('vehicleTypeId')) {
+              return AddVehiclePage(vehicleTypeId: args['vehicleTypeId'] as int);
+            } else {
+              return const Scaffold(body: Center(child: Text('Error: argumentos inválidos')));
+            }
+          },
+          '/edit-vehicle': (context) {
+            final vehicle = ModalRoute.of(context)!.settings.arguments;
+            if (vehicle is VehicleModel) {
+              return EditVehiclePage(vehicle: vehicle);
+            } else {
+              return const Scaffold(body: Center(child: Text('Error: argumentos inválidos')));
+            }
+          },
+          '/edit-category-vehicle': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments;
+            if (args is VehicleTypeModel) {
+              return EditCategoryPage(vehicleType: args);
+            } else {
+              return const Scaffold(body: Center(child: Text('Error: argumentos inválidos')));
+            }
+          },
+          '/add-category-vehicle': (context) => AddCategoryPage(),
         },
       ),
     );
