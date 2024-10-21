@@ -1,108 +1,58 @@
 import 'package:flutter/material.dart';
+import 'package:front_ruedarent_flutter/src/data/database_helper.dart';
 
 class EditCategoryPage extends StatelessWidget {
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController descriptionController = TextEditingController();
+  final Map<String, dynamic> category;
 
-  EditCategoryPage({Key? key}) : super(key: key);
+  EditCategoryPage({required this.category});
+
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _infoController = TextEditingController();
+  final TextEditingController _imageController = TextEditingController();
+
+  @override
+  void initState() {
+    _nameController.text = category['name'];
+    _infoController.text = category['info'];
+    _imageController.text = category['image'];
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Editar categoría'),
-        backgroundColor: Colors.green,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);  // Vuelve a la pantalla anterior
-          },
-        ),
+        title: Text('Editar Categoría'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Icono de agregar imagen (simulado)
-              Center(
-                child: GestureDetector(
-                  onTap: () {
-                    // Lógica para editar imagen
-                  },
-                  child: Container(
-                    width: 150,
-                    height: 150,
-                    color: Colors.grey.shade300,
-                    child: const Icon(
-                      Icons.add_box,
-                      size: 100,
-                      color: Colors.black54,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Nombre de la categoría',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Campo de Nombre de la Categoría
-              const Text('Nombre', style: TextStyle(fontSize: 18)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.edit, color: Colors.green),
-                  hintText: 'Nombre de la categoría',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Campo de Descripción
-              const Text('Descripción', style: TextStyle(fontSize: 18)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: descriptionController,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.description, color: Colors.green),
-                  hintText: 'Descripción',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 30),
-
-              // Botón para editar la categoría
-              Center(
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      // Lógica para editar la categoría
-                    },
-                    icon: const Icon(Icons.arrow_forward, color: Colors.white),
-                    label: const Text('Guardar cambios'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      textStyle: const TextStyle(fontSize: 18),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+        child: Column(
+          children: [
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(labelText: 'Nombre de la categoría'),
+            ),
+            TextField(
+              controller: _infoController,
+              decoration: InputDecoration(labelText: 'Información de la categoría'),
+            ),
+            TextField(
+              controller: _imageController,
+              decoration: InputDecoration(labelText: 'Ruta de la imagen'),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () async {
+                final updatedCategory = {
+                  'name': _nameController.text,
+                  'info': _infoController.text,
+                  'image': _imageController.text
+                };
+                await DatabaseHelper().updateVehicle(updatedCategory, category['id']);
+                Navigator.pop(context);  // Volver a la pantalla anterior después de guardar
+              },
+              child: Text('Actualizar'),
+            ),
+          ],
         ),
       ),
     );
