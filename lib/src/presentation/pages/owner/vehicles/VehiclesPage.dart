@@ -1,22 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/categories/bike/BikeCategoryPage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/categories/scooter/ScooterCategoryPage.dart';
-
-void main() {
-  runApp(VehiclesApp());
-}
-
-class VehiclesApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-      ),
-      home: VehiclesPage(),
-    );
-  }
-}
+import 'package:front_ruedarent_flutter/src/data/database_helper.dart'; // Importar el helper de SQLite
 
 class VehiclesPage extends StatefulWidget {
   @override
@@ -24,26 +9,38 @@ class VehiclesPage extends StatefulWidget {
 }
 
 class _VehiclesPageState extends State<VehiclesPage> {
-  List<Map<String, String>> vehicles = [
-    {
-      'name': 'Bike',
-      'info': 'Info about the bike',
-      'image': 'assets/images/vehicles/bicicleta.png',
-    },
-    {
-      'name': 'Scooter Electrónico',
-      'info': 'Info about the scooter',
-      'image': 'assets/images/vehicles/scooter.png',
-    },
-  ];
+  List<Map<String, dynamic>> vehicles = [];
 
-  // Método para mostrar el cuadro de diálogo de confirmación
+  @override
+  void initState() {
+    super.initState();
+    _loadVehicles();  // Cargar los vehículos al iniciar la pantalla
+  }
+
+  // Método para cargar los vehículos desde la base de datos
+  Future<void> _loadVehicles() async {
+    final data = await DatabaseHelper().getVehicles();  // Obtener los vehículos desde la base de datos
+    setState(() {
+      vehicles = data;  // Actualizar el estado con los vehículos cargados
+    });
+  }
+
+  // Método para eliminar un vehículo de la base de datos y de la lista visual
+  Future<void> _deleteVehicle(int index) async {
+    int id = vehicles[index]['id']; // Obtener el id del vehículo
+    await DatabaseHelper().deleteVehicle(id);  // Eliminar de la base de datos
+    setState(() {
+      vehicles.removeAt(index);  // Remover de la lista visual
+    });
+  }
+
+  // Mostrar el cuadro de diálogo de confirmación para eliminar un vehículo
   void _showDeleteDialog(BuildContext context, int index) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('¿Estás seguro de que deseas eliminar esta categoría?'),
+          title: const Text('¿Estás seguro de que deseas eliminar este vehículo?'),
           actions: <Widget>[
             TextButton(
               child: const Text('Cancelar'),
@@ -54,10 +51,8 @@ class _VehiclesPageState extends State<VehiclesPage> {
             TextButton(
               child: const Text('Eliminar'),
               onPressed: () {
-                setState(() {
-                  vehicles.removeAt(index);  // Elimina la categoría de la lista
-                });
-                Navigator.of(context).pop();  // Cierra el cuadro de diálogo después de eliminar
+                _deleteVehicle(index);  // Llamar al método para eliminar el vehículo
+                Navigator.of(context).pop();  // Cerrar el cuadro de diálogo
               },
             ),
           ],
@@ -70,7 +65,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Vehicles'),
+        title: const Text('Categorías de Vehículos'),
         centerTitle: true,
       ),
       body: Padding(
@@ -84,7 +79,6 @@ class _VehiclesPageState extends State<VehiclesPage> {
                   return GestureDetector(
                     onTap: () {
                       if (vehicles[index]['name'] == 'Scooter Electrónico') {
-                        // Navegar a la página de Scooter Electrónico
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -92,7 +86,6 @@ class _VehiclesPageState extends State<VehiclesPage> {
                           ),
                         );
                       } else if (vehicles[index]['name'] == 'Bike') {
-                        // Navegar a la página de Bicicleta
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -108,8 +101,10 @@ class _VehiclesPageState extends State<VehiclesPage> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Image.asset(
-                              vehicles[index]['image']!,
+                            Image(
+                              image: vehicles[index]['image'] != null && vehicles[index]['image'].isNotEmpty
+                                  ? NetworkImage(vehicles[index]['image']) // Cargar imagen desde URL si existe
+                                  : AssetImage('assets/images/vehicles/bicileta.png'), // Cargar imagen predeterminada
                               height: 100,
                               width: 100,
                               fit: BoxFit.cover,
@@ -120,7 +115,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    vehicles[index]['name']!,
+                                    vehicles[index]['name'] ?? '',
                                     style: const TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
@@ -129,7 +124,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    vehicles[index]['info']!,
+                                    vehicles[index]['info'] ?? '',
                                     style: const TextStyle(fontSize: 16),
                                   ),
                                 ],
@@ -140,18 +135,16 @@ class _VehiclesPageState extends State<VehiclesPage> {
                                 IconButton(
                                   icon: const Icon(Icons.delete, color: Colors.green),
                                   onPressed: () {
-                                    // Mostrar el diálogo de confirmación al hacer clic en eliminar
-                                    _showDeleteDialog(context, index);
+                                    _showDeleteDialog(context, index);  // Mostrar el diálogo de confirmación
                                   },
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.edit, color: Colors.green),
                                   onPressed: () {
-                                    // Lógica para editar el vehículo
                                     Navigator.pushNamed(
                                       context,
-                                      '/edit-vehicle',
-                                      arguments: vehicles[index],
+                                      '/edit-category',
+                                      arguments: vehicles[index],  // Pasar el vehículo a editar
                                     );
                                   },
                                 ),
@@ -166,11 +159,16 @@ class _VehiclesPageState extends State<VehiclesPage> {
               ),
             ),
             ElevatedButton(
-              onPressed: () {
-                // Lógica para añadir un nuevo vehículo
-                Navigator.pushNamed(context, '/add-vehicle');
+              onPressed: () async {
+                // Navegar a la página para agregar categorías y esperar el resultado
+                final result = await Navigator.pushNamed(context, '/add-category');
+
+                // Verificar si se ha añadido una nueva categoría
+                if (result == true) {
+                  _loadVehicles();  // Recargar la lista de vehículos si se agregó uno nuevo
+                }
               },
-              child: const Text('ADD +'),
+              child: const Text('AGREGAR +'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -185,15 +183,15 @@ class _VehiclesPageState extends State<VehiclesPage> {
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.star_border),
-            label: 'Favorite',
+            label: 'Favoritos',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.directions_car),
-            label: 'Vehicles',
+            label: 'Vehículos',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
-            label: 'Profile',
+            label: 'Perfil',
           ),
         ],
       ),
