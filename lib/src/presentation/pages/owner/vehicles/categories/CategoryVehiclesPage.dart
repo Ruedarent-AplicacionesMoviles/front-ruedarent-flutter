@@ -1,3 +1,4 @@
+import 'dart:io'; // Importar dart:io para manejar archivos locales
 import 'package:flutter/material.dart';
 import 'package:front_ruedarent_flutter/src/data/models/vehicle_model.dart';
 import 'package:front_ruedarent_flutter/src/data/repositories/vehicle_repository.dart';
@@ -47,7 +48,6 @@ class _CategoryVehiclesPageState extends State<CategoryVehiclesPage> {
   }
 
   // Método para agregar un nuevo vehículo
-  // Método para agregar un nuevo vehículo
   Future<void> _addVehicle() async {
     int vehicleTypeId = await _getVehicleTypeIdByName(widget.categoryName);
 
@@ -86,10 +86,15 @@ class _CategoryVehiclesPageState extends State<CategoryVehiclesPage> {
                 padding: const EdgeInsets.all(12.0),
                 child: Row(
                   children: [
-                    Image(
-                      image: vehicles[index].photos != null && vehicles[index].photos!.isNotEmpty
-                          ? NetworkImage(vehicles[index].photos!) as ImageProvider
-                          : const AssetImage('assets/images/vehicles/default.png'),
+                    vehicles[index].photos != null && vehicles[index].photos!.isNotEmpty
+                        ? Image.file(
+                      File(vehicles[index].photos!), // Cambiar a Image.file para manejar archivos locales
+                      height: 100,
+                      width: 100,
+                      fit: BoxFit.cover,
+                    )
+                        : const Image(
+                      image: AssetImage('assets/images/vehicles/default.png'),
                       height: 100,
                       width: 100,
                       fit: BoxFit.cover,

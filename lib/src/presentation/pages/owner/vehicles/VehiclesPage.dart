@@ -1,9 +1,10 @@
+// lib/src/presentation/pages/owner/vehicles/VehiclesPage.dart
+
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:front_ruedarent_flutter/src/data/models/vehicle_type_model.dart';
 import 'package:front_ruedarent_flutter/src/data/repositories/vehicle_type_repository.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/categories/CategoryVehiclesPage.dart';
-import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/categories/bike/BikeCategoryPage.dart';
-import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/categories/scooter/ScooterCategoryPage.dart';
 
 class VehiclesPage extends StatefulWidget {
   const VehiclesPage({super.key});
@@ -99,10 +100,15 @@ class _VehiclesPageState extends State<VehiclesPage> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Image(
-                              image: vehicleTypes[index].image != null && vehicleTypes[index].image!.isNotEmpty
-                                  ? NetworkImage(vehicleTypes[index].image!) as ImageProvider
-                                  : const AssetImage('assets/images/vehicles/default.png'), // Imagen por defecto
+                            vehicleTypes[index].image != null && vehicleTypes[index].image!.isNotEmpty
+                                ? Image.file(
+                              File(vehicleTypes[index].image!),
+                              height: 100,
+                              width: 100,
+                              fit: BoxFit.cover,
+                            )
+                                : const Image(
+                              image: AssetImage('assets/images/vehicles/default.png'), // Imagen por defecto
                               height: 100,
                               width: 100,
                               fit: BoxFit.cover,
