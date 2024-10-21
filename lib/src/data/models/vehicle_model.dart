@@ -9,7 +9,7 @@ class VehicleModel {
   final String location;
   final String availability; // 'available', 'not available', 'under maintenance'
   final double price;
-  final String? photos; // URL or path to the photo
+  final String? photos; // URL o path a la foto
   final String? description;
 
   VehicleModel({
@@ -25,6 +25,7 @@ class VehicleModel {
     this.description,
   });
 
+  // Convertir el modelo a un Map para interactuar con la base de datos
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -40,6 +41,7 @@ class VehicleModel {
     };
   }
 
+  // Crear una instancia de VehicleModel a partir de un Map (al leer desde la base de datos)
   factory VehicleModel.fromMap(Map<String, dynamic> map) {
     return VehicleModel(
       id: map['id'],
@@ -53,5 +55,11 @@ class VehicleModel {
       photos: map['photos'],
       description: map['description'],
     );
+  }
+
+  // Método útil para debuggear, que devuelve una representación en String del objeto
+  @override
+  String toString() {
+    return 'VehicleModel{id: $id, brand: $brand, model: $model, location: $location, price: $price}';
   }
 }

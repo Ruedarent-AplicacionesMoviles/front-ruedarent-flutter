@@ -1,22 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:front_ruedarent_flutter/src/data/models/vehicle_type_model.dart';
+import 'package:front_ruedarent_flutter/src/data/repositories/vehicle_type_repository.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/categories/bike/BikeCategoryPage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/categories/scooter/ScooterCategoryPage.dart';
-
-void main() {
-  runApp(VehiclesApp());
-}
-
-class VehiclesApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-      ),
-      home: VehiclesPage(),
-    );
-  }
-}
 
 class VehiclesPage extends StatefulWidget {
   @override
@@ -24,40 +10,50 @@ class VehiclesPage extends StatefulWidget {
 }
 
 class _VehiclesPageState extends State<VehiclesPage> {
-  List<Map<String, String>> vehicles = [
-    {
-      'name': 'Bike',
-      'info': 'Info about the bike',
-      'image': 'assets/images/vehicles/bicicleta.png',
-    },
-    {
-      'name': 'Scooter Electrónico',
-      'info': 'Info about the scooter',
-      'image': 'assets/images/vehicles/scooter.png',
-    },
-  ];
+  List<VehicleTypeModel> vehicleTypes = []; // Cambia el tipo a VehicleTypeModel
 
-  // Método para mostrar el cuadro de diálogo de confirmación
+  @override
+  void initState() {
+    super.initState();
+    _loadVehicleTypes(); // Cargar los tipos de vehículos al iniciar la pantalla
+  }
+
+  // Método para cargar los tipos de vehículos desde la base de datos
+  Future<void> _loadVehicleTypes() async {
+    final data = await VehicleTypeRepository().getVehicleTypes(); // Obtener los tipos de vehículos desde el repositorio
+    setState(() {
+      vehicleTypes = data.map((e) => VehicleTypeModel.fromMap(e)).toList(); // Mapear los datos a VehicleTypeModel
+    });
+  }
+
+  // Método para eliminar un tipo de vehículo de la base de datos y de la lista visual
+  Future<void> _deleteVehicleType(int index) async {
+    int id = vehicleTypes[index].id!; // Obtener el id del tipo de vehículo
+    await VehicleTypeRepository().deleteVehicleType(id); // Eliminar de la base de datos
+    setState(() {
+      vehicleTypes.removeAt(index); // Remover de la lista visual
+    });
+  }
+
+  // Mostrar el cuadro de diálogo de confirmación para eliminar un tipo de vehículo
   void _showDeleteDialog(BuildContext context, int index) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('¿Estás seguro de que deseas eliminar esta categoría?'),
+          title: const Text('¿Estás seguro de que deseas eliminar este tipo de vehículo?'),
           actions: <Widget>[
             TextButton(
               child: const Text('Cancelar'),
               onPressed: () {
-                Navigator.of(context).pop();  // Cierra el cuadro de diálogo
+                Navigator.of(context).pop(); // Cierra el cuadro de diálogo
               },
             ),
             TextButton(
               child: const Text('Eliminar'),
               onPressed: () {
-                setState(() {
-                  vehicles.removeAt(index);  // Elimina la categoría de la lista
-                });
-                Navigator.of(context).pop();  // Cierra el cuadro de diálogo después de eliminar
+                _deleteVehicleType(index); // Llamar al método para eliminar el tipo de vehículo
+                Navigator.of(context).pop(); // Cerrar el cuadro de diálogo
               },
             ),
           ],
@@ -70,7 +66,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Vehicles'),
+        title: const Text('Categorías de Vehículos'),
         centerTitle: true,
       ),
       body: Padding(
@@ -79,20 +75,19 @@ class _VehiclesPageState extends State<VehiclesPage> {
           children: [
             Expanded(
               child: ListView.builder(
-                itemCount: vehicles.length,
+                itemCount: vehicleTypes.length,
                 itemBuilder: (context, index) {
                   return GestureDetector(
                     onTap: () {
-                      if (vehicles[index]['name'] == 'Scooter Electrónico') {
-                        // Navegar a la página de Scooter Electrónico
+                      // Navegar a la página correspondiente según el tipo de vehículo
+                      if (vehicleTypes[index].name == 'Scooter Electrónico') {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => ScooterCategoryPage(),
                           ),
                         );
-                      } else if (vehicles[index]['name'] == 'Bike') {
-                        // Navegar a la página de Bicicleta
+                      } else if (vehicleTypes[index].name == 'Bike') {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -108,8 +103,10 @@ class _VehiclesPageState extends State<VehiclesPage> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Image.asset(
-                              vehicles[index]['image']!,
+                            Image(
+                              image: vehicleTypes[index].image != null && vehicleTypes[index].image!.isNotEmpty
+                                  ? NetworkImage(vehicleTypes[index].image!) as ImageProvider
+                                  : const AssetImage('assets/images/vehicles/default.png'), // Imagen por defecto
                               height: 100,
                               width: 100,
                               fit: BoxFit.cover,
@@ -120,7 +117,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    vehicles[index]['name']!,
+                                    vehicleTypes[index].name,
                                     style: const TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
@@ -129,7 +126,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    vehicles[index]['info']!,
+                                    vehicleTypes[index].info ?? '', // Muestra la información de la categoría
                                     style: const TextStyle(fontSize: 16),
                                   ),
                                 ],
@@ -140,18 +137,16 @@ class _VehiclesPageState extends State<VehiclesPage> {
                                 IconButton(
                                   icon: const Icon(Icons.delete, color: Colors.green),
                                   onPressed: () {
-                                    // Mostrar el diálogo de confirmación al hacer clic en eliminar
-                                    _showDeleteDialog(context, index);
+                                    _showDeleteDialog(context, index); // Mostrar el diálogo de confirmación
                                   },
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.edit, color: Colors.green),
                                   onPressed: () {
-                                    // Lógica para editar el vehículo
                                     Navigator.pushNamed(
                                       context,
-                                      '/edit-vehicle',
-                                      arguments: vehicles[index],
+                                      '/edit-category',
+                                      arguments: vehicleTypes[index],  // Pasar el tipo de vehículo a editar
                                     );
                                   },
                                 ),
@@ -166,11 +161,16 @@ class _VehiclesPageState extends State<VehiclesPage> {
               ),
             ),
             ElevatedButton(
-              onPressed: () {
-                // Lógica para añadir un nuevo vehículo
-                Navigator.pushNamed(context, '/add-vehicle');
+              onPressed: () async {
+                // Navegar a la página para agregar un nuevo tipo de vehículo y esperar el resultado
+                final result = await Navigator.pushNamed(context, '/add-category');
+
+                // Verificar si se ha añadido un nuevo tipo de vehículo
+                if (result == true) {
+                  _loadVehicleTypes(); // Recargar la lista de tipos de vehículos si se agregó uno nuevo
+                }
               },
-              child: const Text('ADD +'),
+              child: const Text('AGREGAR +'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -185,15 +185,15 @@ class _VehiclesPageState extends State<VehiclesPage> {
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.star_border),
-            label: 'Favorite',
+            label: 'Favoritos',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.directions_car),
-            label: 'Vehicles',
+            label: 'Vehículos',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
-            label: 'Profile',
+            label: 'Perfil',
           ),
         ],
       ),

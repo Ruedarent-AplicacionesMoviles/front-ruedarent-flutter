@@ -1,5 +1,3 @@
-// src/data/database/database_helper.dart
-
 import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
@@ -37,9 +35,9 @@ class DatabaseHelper {
     // Abrir la base de datos, creando las tablas si no existen
     return await openDatabase(
       path,
-      version: 1,
+      version: 2, // Incrementar la versión si es necesario hacer migraciones
       onCreate: _onCreate,
-      // Puedes añadir onUpgrade si necesitas actualizar la estructura
+      onUpgrade: _onUpgrade, // Añadir onUpgrade para manejar cambios en la estructura
     );
   }
 
@@ -48,7 +46,9 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE VehicleType (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL UNIQUE
+        name TEXT NOT NULL UNIQUE,
+        info TEXT,
+        image TEXT
       )
     ''');
 
@@ -121,6 +121,19 @@ class DatabaseHelper {
         FOREIGN KEY (userId) REFERENCES "User"(id) ON DELETE CASCADE
       )
     ''');
+  }
+
+  // Método para manejar actualizaciones en la estructura de la base de datos
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Cambios para la versión 2 de la base de datos, agregar columnas o tablas nuevas
+      await db.execute('''
+        ALTER TABLE VehicleType ADD COLUMN info TEXT;
+      ''');
+      await db.execute('''
+        ALTER TABLE VehicleType ADD COLUMN image TEXT;
+      ''');
+    }
   }
 
   // Métodos para cerrar la base de datos si es necesario
