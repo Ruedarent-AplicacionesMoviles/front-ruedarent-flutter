@@ -1,4 +1,6 @@
+import 'dart:io'; // Para manejar archivos locales
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart'; // Dependencia para obtener imágenes de la galería
 import 'package:front_ruedarent_flutter/src/data/models/vehicle_model.dart';
 import 'package:front_ruedarent_flutter/src/data/repositories/vehicle_repository.dart';
 import 'package:front_ruedarent_flutter/src/data/repositories/vehicle_type_repository.dart';
@@ -15,6 +17,7 @@ class CategoryVehiclesPage extends StatefulWidget {
 
 class _CategoryVehiclesPageState extends State<CategoryVehiclesPage> {
   List<VehicleModel> vehicles = [];
+  final ImagePicker _picker = ImagePicker(); // Instancia para acceder a la galería
 
   @override
   void initState() {
@@ -41,34 +44,6 @@ class _CategoryVehiclesPageState extends State<CategoryVehiclesPage> {
     return vehicleType?.id ?? -1; // Retorna -1 si no se encuentra
   }
 
-  // Método para mostrar advertencia antes de eliminar
-  void _confirmDelete(BuildContext context, int vehicleId) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Eliminar Vehículo'),
-          content: const Text('¿Estás seguro de que deseas eliminar este vehículo?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Cerrar diálogo
-              },
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Cerrar diálogo
-                _deleteVehicle(vehicleId); // Eliminar el vehículo después de la confirmación
-              },
-              child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   // Método para eliminar un vehículo
   Future<void> _deleteVehicle(int id) async {
     await VehicleRepository().deleteVehicle(id);
@@ -88,6 +63,16 @@ class _CategoryVehiclesPageState extends State<CategoryVehiclesPage> {
         _loadVehicles(); // Recargar vehículos si se agregó uno nuevo
       }
     });
+  }
+
+  // Método para seleccionar imagen desde la galería
+  Future<void> _pickImage(int index) async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        vehicles[index].photos = image.path; // Guardar la ruta de la imagen seleccionada
+      });
+    }
   }
 
   @override
@@ -124,10 +109,15 @@ class _CategoryVehiclesPageState extends State<CategoryVehiclesPage> {
                   padding: const EdgeInsets.all(12.0),
                   child: Row(
                     children: [
-                      Image(
-                        image: vehicles[index].photos != null && vehicles[index].photos!.isNotEmpty
-                            ? NetworkImage(vehicles[index].photos!) as ImageProvider
-                            : const AssetImage('assets/images/vehicles/default.png'),
+                      vehicles[index].photos != null && vehicles[index].photos!.isNotEmpty
+                          ? Image.file(
+                        File(vehicles[index].photos!), // Manejar archivos locales
+                        height: 100,
+                        width: 100,
+                        fit: BoxFit.cover,
+                      )
+                          : const Image(
+                        image: AssetImage('assets/images/vehicles/default.png'),
                         height: 100,
                         width: 100,
                         fit: BoxFit.cover,
@@ -146,6 +136,11 @@ class _CategoryVehiclesPageState extends State<CategoryVehiclesPage> {
                             Text('${vehicles[index].location}'),
                           ],
                         ),
+                      ),
+                      // Botón para cambiar la imagen desde la galería
+                      IconButton(
+                        icon: const Icon(Icons.photo_library, color: Colors.blue),
+                        onPressed: () => _pickImage(index), // Seleccionar imagen
                       ),
                       // Botones de editar y eliminar
                       Column(
@@ -182,6 +177,34 @@ class _CategoryVehiclesPageState extends State<CategoryVehiclesPage> {
         )
             : const Center(child: Text('No hay vehículos disponibles en esta categoría.')),
       ),
+    );
+  }
+
+  // Método para mostrar advertencia antes de eliminar
+  void _confirmDelete(BuildContext context, int vehicleId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Eliminar Vehículo'),
+          content: const Text('¿Estás seguro de que deseas eliminar este vehículo?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar diálogo
+              },
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar diálogo
+                _deleteVehicle(vehicleId); // Eliminar el vehículo después de la confirmación
+              },
+              child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
     );
   }
 }
