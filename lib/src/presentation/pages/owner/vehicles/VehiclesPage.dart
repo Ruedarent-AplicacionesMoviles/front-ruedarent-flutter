@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:front_ruedarent_flutter/src/data/models/vehicle_type_model.dart';
 import 'package:front_ruedarent_flutter/src/data/repositories/vehicle_type_repository.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/categories/CategoryVehiclesPage.dart';
-import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/categories/bike/BikeCategoryPage.dart';
-import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/categories/scooter/ScooterCategoryPage.dart';
 
 class VehiclesPage extends StatefulWidget {
   const VehiclesPage({super.key});

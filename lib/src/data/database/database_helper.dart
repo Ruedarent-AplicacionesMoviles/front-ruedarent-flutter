@@ -35,7 +35,7 @@ class DatabaseHelper {
     // Abrir la base de datos, creando las tablas si no existen
     return await openDatabase(
       path,
-      version: 2, // Incrementar la versión si es necesario hacer migraciones
+      version: 3, // Incrementar la versión si es necesario hacer migraciones
       onCreate: _onCreate,
       onUpgrade: _onUpgrade, // Añadir onUpgrade para manejar cambios en la estructura
     );
@@ -128,6 +128,17 @@ class DatabaseHelper {
         FOREIGN KEY (userId) REFERENCES "User"(id) ON DELETE CASCADE
       )
     ''');
+
+    // Crear la tabla Address
+    await db.execute('''
+      CREATE TABLE Address (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        direccion TEXT NOT NULL,
+        distrito TEXT NOT NULL,
+        userId INTEGER NOT NULL,
+        FOREIGN KEY (userId) REFERENCES "User"(id) ON DELETE CASCADE
+      )
+    ''');
   }
 
   // Método para manejar actualizaciones en la estructura de la base de datos
@@ -139,6 +150,18 @@ class DatabaseHelper {
       ''');
       await db.execute('''
         ALTER TABLE VehicleType ADD COLUMN image TEXT;
+      ''');
+    }
+    if (oldVersion < 3) {
+      // Cambios para la versión 3: Crear la tabla Address
+      await db.execute('''
+        CREATE TABLE Address (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          direccion TEXT NOT NULL,
+          distrito TEXT NOT NULL,
+          userId INTEGER NOT NULL,
+          FOREIGN KEY (userId) REFERENCES "User"(id) ON DELETE CASCADE
+        )
       ''');
     }
   }

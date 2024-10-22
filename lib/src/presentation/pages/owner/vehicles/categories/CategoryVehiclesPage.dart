@@ -47,7 +47,6 @@ class _CategoryVehiclesPageState extends State<CategoryVehiclesPage> {
   }
 
   // Método para agregar un nuevo vehículo
-  // Método para agregar un nuevo vehículo
   Future<void> _addVehicle() async {
     int vehicleTypeId = await _getVehicleTypeIdByName(widget.categoryName);
 

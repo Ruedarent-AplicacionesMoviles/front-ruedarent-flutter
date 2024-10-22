@@ -13,6 +13,7 @@ import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/Ed
 import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/VehiclesPage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/vehicle/AddVehiclePage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/vehicle/EditVehiclePage.dart';
+import 'package:front_ruedarent_flutter/src/presentation/pages/renter/RentadorVehiclesPage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/roles/RolesPage.dart';
 
 
@@ -77,6 +78,8 @@ class MyApp extends StatelessWidget {
             }
           },
           '/add-category-vehicle': (context) => AddCategoryPage(),
+          '/vehicles-renter': (context) => const RentadorVehiclesPage(),
+
         },
       ),
     );
