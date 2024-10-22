@@ -48,13 +48,13 @@ class _VehicleDetailForOwnerPageState extends State<VehicleDetailForOwnerPage> {
         ),
         backgroundColor: Colors.green,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () {
-              // Navegar a la página de edición
-              _navigateToEditPage(context);
-            },
-          ),
+          // IconButton(
+          //   icon: const Icon(Icons.edit),
+          //   onPressed: () {
+          //     // Navegar a la página de edición
+          //     _navigateToEditPage(context);
+          //   },
+          // ),
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: () {

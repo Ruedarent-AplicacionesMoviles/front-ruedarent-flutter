@@ -153,7 +153,7 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
               ElevatedButton(
                 onPressed: _saveVehicle, // Guardar cambios
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green, // Color de fondo
+                  backgroundColor: Colors.green.shade300, // Color de fondo
                   padding: const EdgeInsets.symmetric(vertical: 15.0),
                 ),
                 child: const Text('Actualizar vehículo', style: TextStyle(color: Colors.white)),
