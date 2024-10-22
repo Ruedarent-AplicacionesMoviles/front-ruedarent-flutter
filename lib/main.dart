@@ -13,6 +13,7 @@ import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/Ed
 import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/VehiclesPage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/vehicle/AddVehiclePage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/vehicle/EditVehiclePage.dart';
+import 'package:front_ruedarent_flutter/src/presentation/pages/profile/UserProfilePage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/renter/RentadorVehiclesPage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/roles/RolesPage.dart';
 
@@ -79,6 +80,15 @@ class MyApp extends StatelessWidget {
           },
           '/add-category-vehicle': (context) => AddCategoryPage(),
           '/vehicles-renter': (context) => const RentadorVehiclesPage(),
+
+          '/user-profile': (context) {
+            final userId = ModalRoute.of(context)!.settings.arguments as int?;
+            if (userId != null) {
+              return UserProfilePage(userId: userId);
+            } else {
+              return const Scaffold(body: Center(child: Text('Error: User data is null')));
+            }
+          },
 
         },
       ),

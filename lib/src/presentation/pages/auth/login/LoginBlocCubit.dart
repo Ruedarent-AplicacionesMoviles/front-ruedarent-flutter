@@ -3,7 +3,6 @@ import 'package:rxdart/rxdart.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../../data/repositories/user_repository.dart';
 import 'LoginBlocState.dart';
-import 'package:sqflite/sqflite.dart';
 
 class LoginBlocCubit extends Cubit<LoginBlocState> {
   LoginBlocCubit() : super(LoginInitial());
@@ -39,6 +38,7 @@ class LoginBlocCubit extends Cubit<LoginBlocState> {
         (email, password) => true,
   );
 
+  // Método para login
   Future<void> login({bool isTestUser = false}) async {
     try {
       emit(LoginLoading());
@@ -49,7 +49,7 @@ class LoginBlocCubit extends Cubit<LoginBlocState> {
           name: 'Test User',
           email: 'testuser@domain.com',
           password: 'Password123!',
-          userType: 'owner', // O el rol que prefieras
+          userType: 'owner', // o el tipo de usuario que prefieras
           notificationPreferences: 'all',
         );
         emit(LoginSuccess(testUser));
@@ -60,11 +60,12 @@ class LoginBlocCubit extends Cubit<LoginBlocState> {
       final email = _emailController.value.trim();
       final password = _passwordController.value.trim();
 
+      // Verificar si el usuario existe y las credenciales son correctas
       UserModel? user = await userRepo.getUserByEmail(email);
       if (user == null || user.password != password) {
         emit(LoginError('Correo o contraseña incorrectos.'));
       } else {
-        emit(LoginSuccess(user));
+        emit(LoginSuccess(user)); // Si el login es exitoso, emitir el éxito
       }
     } catch (e) {
       emit(LoginError('Error al iniciar sesión: $e'));

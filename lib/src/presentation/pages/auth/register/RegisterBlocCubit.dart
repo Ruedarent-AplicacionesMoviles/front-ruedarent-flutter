@@ -3,7 +3,7 @@ import 'package:rxdart/rxdart.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../../data/repositories/user_repository.dart';
 import 'RegisterBlocState.dart';
-import 'package:sqflite/sqflite.dart';
+
 class RegisterBlocCubit extends Cubit<RegisterBlocState> {
   RegisterBlocCubit() : super(RegisterInitial());
 

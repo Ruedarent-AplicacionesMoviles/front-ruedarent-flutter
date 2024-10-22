@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:front_ruedarent_flutter/src/data/repositories/vehicle_type_repository.dart';
 import 'package:front_ruedarent_flutter/src/data/models/vehicle_type_model.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/renter/category/CategoryVehiclesForRenterPage.dart';
+import 'package:front_ruedarent_flutter/src/presentation/pages/renter/filter/FiltersPage.dart';
 
 class RentadorVehiclesPage extends StatefulWidget {
   const RentadorVehiclesPage({super.key});
@@ -13,6 +14,9 @@ class RentadorVehiclesPage extends StatefulWidget {
 class _RentadorVehiclesPageState extends State<RentadorVehiclesPage> {
   List<VehicleTypeModel> vehicleTypes = [];
   String _searchTerm = ''; // Variable para manejar el término de búsqueda
+  String? _selectedAvailability;
+  String? _selectedLocation;
+  RangeValues _priceRange = const RangeValues(0, 1000);
   int _selectedIndex = 0; // Índice de la página seleccionada en la barra
 
   @override
@@ -29,11 +33,36 @@ class _RentadorVehiclesPageState extends State<RentadorVehiclesPage> {
     });
   }
 
+  // Navegar a la página de filtros
+  void _navigateToFilters() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FiltersPage(
+          selectedAvailability: _selectedAvailability,
+          selectedLocation: _selectedLocation,
+          priceRange: _priceRange,
+        ),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedAvailability = result['availability'];
+        _selectedLocation = result['location'];
+        _priceRange = result['priceRange'];
+        // Aquí puedes aplicar los filtros a tu lista de vehículos si lo deseas
+      });
+    }
+  }
+
   // Manejar la navegación al cambiar de índice en la barra de navegación
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+
+    int userId = 1; // ID de usuario para pasar a las páginas de perfil y alquiler
 
     // Manejar la navegación entre las pantallas según el índice
     switch (index) {
@@ -41,12 +70,12 @@ class _RentadorVehiclesPageState extends State<RentadorVehiclesPage> {
       // Mantenerse en la pantalla actual
         break;
       case 1:
-      // Navegar a la pantalla de alquiler de vehículos
-        Navigator.pushReplacementNamed(context, '/rent');
+      // Navegar a la pantalla de perfil del usuario
+        Navigator.pushReplacementNamed(context, '/user-profile', arguments: userId);
         break;
       case 2:
-      // Navegar a la pantalla de perfil del usuario
-        Navigator.pushReplacementNamed(context, '/profile');
+      // Navegar a la página de filtros
+        _navigateToFilters();
         break;
     }
   }
@@ -62,7 +91,7 @@ class _RentadorVehiclesPageState extends State<RentadorVehiclesPage> {
       appBar: AppBar(
         title: const Text('Vehículos Disponibles'),
         centerTitle: true,
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.green.shade300,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -160,12 +189,12 @@ class _RentadorVehiclesPageState extends State<RentadorVehiclesPage> {
             label: 'Categorías',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.directions_car),
-            label: 'Mis Alquileres',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Perfil',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.filter_list),
+            label: 'Filtros',
           ),
         ],
         currentIndex: _selectedIndex,

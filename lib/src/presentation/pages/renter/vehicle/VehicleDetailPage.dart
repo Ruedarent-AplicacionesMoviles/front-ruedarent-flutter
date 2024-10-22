@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:front_ruedarent_flutter/src/data/models/vehicle_model.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/renter/vehicle/ConfirmOrderPage.dart';
 
-
 class VehicleDetailPage extends StatelessWidget {
   final VehicleModel vehicle;
 
@@ -13,6 +12,7 @@ class VehicleDetailPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('${vehicle.brand} ${vehicle.model}'),
+        backgroundColor: Colors.green.shade200,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -57,25 +57,28 @@ class VehicleDetailPage extends StatelessWidget {
                 style: const TextStyle(fontSize: 16),
               ),
             const Spacer(),
-            // Botón para alquilar el vehículo
-            Center(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                ),
-                onPressed: () {
-                  // Navegar a la página de confirmación de orden
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ConfirmOrderPage(vehicle: vehicle), // Pasar el vehículo a ConfirmOrderPage
-                    ),
-                  );
-                },
-                child: const Text(
-                  'Alquilar Vehículo',
-                  style: TextStyle(fontSize: 18),
+            // Botón para alquilar el vehículo centrado y con buen padding inferior
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0), // Espaciado superior e inferior para el botón
+              child: Center(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green.shade300,
+                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                  ),
+                  onPressed: () {
+                    // Navegar a la página de confirmación de orden
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ConfirmOrderPage(vehicle: vehicle), // Pasar el vehículo a ConfirmOrderPage
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    'Alquilar Vehículo',
+                    style: TextStyle(fontSize: 18),
+                  ),
                 ),
               ),
             ),

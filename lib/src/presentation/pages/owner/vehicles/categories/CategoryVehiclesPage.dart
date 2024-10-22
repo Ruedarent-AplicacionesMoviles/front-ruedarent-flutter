@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:front_ruedarent_flutter/src/data/models/vehicle_model.dart';
 import 'package:front_ruedarent_flutter/src/data/repositories/vehicle_repository.dart';
 import 'package:front_ruedarent_flutter/src/data/repositories/vehicle_type_repository.dart';
+import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/vehicle/VehicleDetailForOwnerPage.dart'; // Importar la página de detalles
 
 class CategoryVehiclesPage extends StatefulWidget {
   final String categoryName;
@@ -38,6 +39,34 @@ class _CategoryVehiclesPageState extends State<CategoryVehiclesPage> {
     final vehicleTypeRepository = VehicleTypeRepository();
     final vehicleType = await vehicleTypeRepository.getVehicleTypeByName(name);
     return vehicleType?.id ?? -1; // Retorna -1 si no se encuentra
+  }
+
+  // Método para mostrar advertencia antes de eliminar
+  void _confirmDelete(BuildContext context, int vehicleId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Eliminar Vehículo'),
+          content: const Text('¿Estás seguro de que deseas eliminar este vehículo?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar diálogo
+              },
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar diálogo
+                _deleteVehicle(vehicleId); // Eliminar el vehículo después de la confirmación
+              },
+              child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   // Método para eliminar un vehículo
@@ -79,66 +108,79 @@ class _CategoryVehiclesPageState extends State<CategoryVehiclesPage> {
             ? ListView.builder(
           itemCount: vehicles.length,
           itemBuilder: (context, index) {
-            return Card(
-              margin: const EdgeInsets.symmetric(vertical: 10.0),
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Row(
-                  children: [
-                    Image(
-                      image: vehicles[index].photos != null && vehicles[index].photos!.isNotEmpty
-                          ? NetworkImage(vehicles[index].photos!) as ImageProvider
-                          : const AssetImage('assets/images/vehicles/default.png'),
-                      height: 100,
-                      width: 100,
-                      fit: BoxFit.cover,
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+            return InkWell(
+              onTap: () {
+                // Navegar a la vista de detalles del propietario
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => VehicleDetailForOwnerPage(vehicle: vehicles[index]),
+                  ),
+                );
+              },
+              child: Card(
+                margin: const EdgeInsets.symmetric(vertical: 10.0),
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Row(
+                    children: [
+                      Image(
+                        image: vehicles[index].photos != null && vehicles[index].photos!.isNotEmpty
+                            ? NetworkImage(vehicles[index].photos!) as ImageProvider
+                            : const AssetImage('assets/images/vehicles/default.png'),
+                        height: 100,
+                        width: 100,
+                        fit: BoxFit.cover,
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              vehicles[index].brand,
+                              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 8),
+                            Text('S/. ${vehicles[index].price.toStringAsFixed(2)}'),
+                            Text('${vehicles[index].location}'),
+                          ],
+                        ),
+                      ),
+                      // Botones de editar y eliminar
+                      Column(
                         children: [
-                          Text(
-                            vehicles[index].brand,
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.green),
+                            onPressed: () {
+                              // Navegar a la página de edición y pasar el vehículo
+                              Navigator.pushNamed(
+                                context,
+                                '/edit-vehicle',
+                                arguments: vehicles[index], // Pasar el vehículo a editar
+                              ).then((result) {
+                                if (result == true) {
+                                  _loadVehicles(); // Recargar vehículos si se hizo un cambio
+                                }
+                              });
+                            },
                           ),
-                          const SizedBox(height: 8),
-                          Text(vehicles[index].description ?? ''),
-                          const SizedBox(height: 8),
-                          Text('Precio: S/. ${vehicles[index].price}'), // Muestra el precio
-                          Text('Ubicación: ${vehicles[index].location}'), // Muestra la ubicación
-                          Text('Disponibilidad: ${vehicles[index].availability}'), // Muestra disponibilidad
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () {
+                              _confirmDelete(context, vehicles[index].id!); // Mostrar advertencia antes de eliminar
+                            },
+                          ),
                         ],
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.green),
-                      onPressed: () {
-                        // Navegar a la página de edición y pasar el vehículo
-                        Navigator.pushNamed(
-                          context,
-                          '/edit-vehicle',
-                          arguments: vehicles[index], // Pasar el vehículo a editar
-                        ).then((result) {
-                          if (result == true) {
-                            _loadVehicles(); // Recargar vehículos si se hizo un cambio
-                          }
-                        });
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () {
-                        _deleteVehicle(vehicles[index].id!); // Eliminar vehículo
-                      },
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             );
           },
         )
-            : Center(child: const Text('No hay vehículos disponibles en esta categoría.')),
+            : const Center(child: Text('No hay vehículos disponibles en esta categoría.')),
       ),
     );
   }

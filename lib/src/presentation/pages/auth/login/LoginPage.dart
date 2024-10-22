@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'LoginBlocCubit.dart';
 import 'LoginBlocState.dart';
 
@@ -125,21 +124,6 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             );
                           },
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      // Botón de login automático para TestUser
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // Login automático para TestUser
-                            _loginBlocCubit.login(isTestUser: true);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue, // Puedes cambiar el color si lo prefieres
-                          ),
-                          child: const Text('Login como TestUser'),
                         ),
                       ),
                       const SizedBox(height: 20),

@@ -63,3 +63,4 @@ class VehicleModel {
     return 'VehicleModel{id: $id, brand: $brand, model: $model, location: $location, price: $price}';
   }
 }
+

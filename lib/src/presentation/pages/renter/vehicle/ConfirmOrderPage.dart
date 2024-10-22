@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:front_ruedarent_flutter/src/data/models/address_model.dart';
 import 'package:front_ruedarent_flutter/src/data/models/vehicle_model.dart';
+import 'package:front_ruedarent_flutter/src/presentation/pages/renter/RentadorVehiclesPage.dart'; // Importar la página de categorías
 import 'package:front_ruedarent_flutter/src/presentation/pages/renter/address/AddressSelectionPage.dart';
-
 
 class ConfirmOrderPage extends StatefulWidget {
   final VehicleModel vehicle; // Recibe el vehículo seleccionado
@@ -15,6 +15,7 @@ class ConfirmOrderPage extends StatefulWidget {
 
 class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
   AddressModel? selectedAddress; // Dirección seleccionada para la orden
+  bool isVehicleDeleted = false; // Variable para rastrear si el vehículo ha sido eliminado
 
   // Navegar a la página de selección de direcciones
   Future<void> _selectAddress() async {
@@ -32,6 +33,36 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
     }
   }
 
+  // Mostrar un diálogo de confirmación antes de eliminar el vehículo
+  Future<void> _confirmDeleteVehicle() async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Eliminar Vehículo'),
+          content: const Text('¿Estás seguro de que deseas eliminar este vehículo de tu orden?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar el diálogo
+              },
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  isVehicleDeleted = true; // Marcar el vehículo como eliminado
+                });
+                Navigator.of(context).pop(); // Cerrar el diálogo
+              },
+              child: const Text('Eliminar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,20 +73,33 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center, // Centrar el contenido horizontalmente
           children: [
-            // Mostrar detalles del vehículo
-            Card(
-              child: ListTile(
-                title: Text('${widget.vehicle.brand} ${widget.vehicle.model}'),
-                subtitle: Text('S/. ${widget.vehicle.price.toStringAsFixed(2)} - ${widget.vehicle.location}'),
-                leading: widget.vehicle.photos != null && widget.vehicle.photos!.isNotEmpty
-                    ? Image.network(widget.vehicle.photos!, height: 50, width: 50, fit: BoxFit.cover)
-                    : const Icon(Icons.directions_car, size: 50),
+            const SizedBox(height: 40), // Espaciado en la parte superior
+            // Mostrar detalles del vehículo con botón de eliminar, solo si no ha sido eliminado
+            if (!isVehicleDeleted)
+              Card(
+                child: ListTile(
+                  title: Text('${widget.vehicle.brand} ${widget.vehicle.model}'),
+                  subtitle: Text('S/. ${widget.vehicle.price.toStringAsFixed(2)} - ${widget.vehicle.location}'),
+                  leading: widget.vehicle.photos != null && widget.vehicle.photos!.isNotEmpty
+                      ? Image.network(widget.vehicle.photos!, height: 50, width: 50, fit: BoxFit.cover)
+                      : const Icon(Icons.directions_car, size: 50),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: _confirmDeleteVehicle, // Mostrar advertencia antes de eliminar el vehículo
+                  ),
+                ),
               ),
-            ),
+            if (isVehicleDeleted)
+              const Center(
+                child: Text(
+                  'Vehículo eliminado de la orden',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red),
+                ),
+              ),
             const SizedBox(height: 16),
-            // Mostrar la dirección seleccionada
+            // Mostrar la dirección seleccionada o permitir seleccionar una dirección
             if (selectedAddress != null)
               Card(
                 child: ListTile(
@@ -78,37 +122,51 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
                 ),
               ),
             const SizedBox(height: 20),
-            // Resumen de la orden (por ejemplo, el total a pagar)
-            const Text(
-              'Total a pagar:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              'S/. ${widget.vehicle.price.toStringAsFixed(2)}', // Mostrar el precio del vehículo
-              style: const TextStyle(fontSize: 20, color: Colors.green),
-            ),
-            const Spacer(),
-            ElevatedButton.icon(
-              onPressed: () {
-                if (selectedAddress != null) {
-                  // Lógica para confirmar la orden con la dirección seleccionada
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Orden confirmada con la dirección: ${selectedAddress!.direccion}')),
-                  );
-                  // Aquí podrías redirigir al usuario a otra pantalla o finalizar el proceso
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, selecciona una dirección')),
-                  );
-                }
-              },
-              icon: const Icon(Icons.check),
-              label: const Text('Confirmar Orden'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+            // Resumen de la orden (por ejemplo, el total a pagar), solo si el vehículo no ha sido eliminado
+            if (!isVehicleDeleted) ...[
+              const Text(
+                'Total a pagar:',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-            ),
+              Text(
+                'S/. ${widget.vehicle.price.toStringAsFixed(2)}', // Mostrar el precio del vehículo
+                style: const TextStyle(fontSize: 20, color: Colors.green),
+              ),
+            ],
+            const Spacer(), // Empuja el contenido de abajo hacia el centro
+            // Si el vehículo ha sido eliminado, mostrar una opción para agregar un nuevo vehículo
+            if (isVehicleDeleted)
+              Align(
+                alignment: Alignment.center, // Centrar el botón de agregar vehículo
+                child: Column(
+                  children: [
+                    const Text(
+                      '¿Deseas agregar un nuevo vehículo?',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        // Redirigir a la página de categorías para seleccionar un nuevo vehículo
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RentadorVehiclesPage(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.add, color: Colors.white),
+                      label: const Text('Agregar Vehículo'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                        textStyle: const TextStyle(fontSize: 18),
+                      ),
+                    ),
+                    const SizedBox(height: 40), // Espaciado en la parte inferior
+                  ],
+                ),
+              ),
           ],
         ),
       ),

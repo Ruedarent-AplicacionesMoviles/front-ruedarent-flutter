@@ -51,7 +51,6 @@ class _RegisterPageState extends State<RegisterPage> {
         },
         child: Stack(
           children: [
-            // Imagen de fondo y otros widgets
             SingleChildScrollView(
               child: Column(
                 children: [
