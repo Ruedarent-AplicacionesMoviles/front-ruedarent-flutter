@@ -98,22 +98,56 @@ class _FiltersPageState extends State<FiltersPage> {
               'Rango de Precio',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            RangeSlider(
-              values: _priceRange,
-              min: 0,
-              max: 150,
-              divisions: 30, // Divisiones para que sean de 5 en 5
-              labels: RangeLabels(
-                _priceRange.start.round().toString(),
-                _priceRange.end.round().toString(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.2),
+                    spreadRadius: 2,
+                    blurRadius: 5,
+                    offset: Offset(0, 3),
+                  ),
+                ],
               ),
-              onChanged: (RangeValues values) {
-                if (values.start >= 0 && values.end <= 150) {
-                  setState(() {
-                    _priceRange = values;
-                  });
-                }
-              },
+              child: Column(
+                children: [
+                  RangeSlider(
+                    activeColor: Colors.green,
+                    inactiveColor: Colors.purple.shade100,
+                    values: _priceRange,
+                    min: 0,
+                    max: 150,
+                    divisions: 30, // Divisiones para que sean de 5 en 5
+                    labels: RangeLabels(
+                      _priceRange.start.round().toString(),
+                      _priceRange.end.round().toString(),
+                    ),
+                    onChanged: (RangeValues values) {
+                      if (values.start >= 0 && values.end <= 150) {
+                        setState(() {
+                          _priceRange = values;
+                        });
+                      }
+                    },
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'S/${_priceRange.start.toStringAsFixed(0)}',
+                        style: TextStyle(fontSize: 16, color: Colors.green),
+                      ),
+                      Text(
+                        'S/${_priceRange.end.toStringAsFixed(0)}',
+                        style: TextStyle(fontSize: 16, color: Colors.green),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 20),
             ElevatedButton(

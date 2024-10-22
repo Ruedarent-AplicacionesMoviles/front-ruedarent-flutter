@@ -165,3 +165,4 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
     );
   }
 }
+

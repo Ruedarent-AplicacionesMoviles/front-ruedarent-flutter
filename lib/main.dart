@@ -64,6 +64,7 @@ class MyApp extends StatelessWidget {
           },
           '/edit-vehicle': (context) {
             final vehicle = ModalRoute.of(context)!.settings.arguments;
+            print(vehicle); // Esto imprimirá los argumentos recibidos
             if (vehicle is VehicleModel) {
               return EditVehiclePage(vehicle: vehicle);
             } else {

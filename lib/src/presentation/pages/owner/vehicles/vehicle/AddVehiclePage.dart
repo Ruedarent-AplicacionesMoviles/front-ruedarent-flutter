@@ -69,7 +69,7 @@ class AddVehiclePage extends StatelessWidget {
                     brand: _brandController.text,
                     model: _modelController.text,
                     location: _locationController.text,
-                    availability: 'available', // Valor predeterminado
+                    availability: 'Disponible', // Valor predeterminado
                     price: double.parse(_priceController.text),
                     photos: _photosController.text.isEmpty ? null : _photosController.text,
                     description: _descriptionController.text.isEmpty ? null : _descriptionController.text,
