@@ -29,13 +29,29 @@ class _VehiclesPageState extends State<VehiclesPage> {
       'name': 'Bike',
       'info': 'Info about the bike',
       'image': 'assets/images/vehicles/bicicleta.png',
+      'location': 'Lima',
+      'price': '10',
+      'availability': 'Available',
     },
     {
       'name': 'Scooter Electrónico',
       'info': 'Info about the scooter',
       'image': 'assets/images/vehicles/scooter.png',
+      'location': 'Cusco',
+      'price': '20',
+      'availability': 'Reserved',
     },
   ];
+
+  String searchQuery = '';
+  String selectedLocation = 'All';
+  String selectedAvailability = 'All';
+  RangeValues selectedPriceRange = const RangeValues(0, 100);
+
+  // Variables temporales para los filtros
+  String tempLocation = 'All';
+  String tempAvailability = 'All';
+  RangeValues tempPriceRange = const RangeValues(0, 100);
 
   // Método para mostrar el cuadro de diálogo de confirmación
   void _showDeleteDialog(BuildContext context, int index) {
@@ -48,16 +64,16 @@ class _VehiclesPageState extends State<VehiclesPage> {
             TextButton(
               child: const Text('Cancelar'),
               onPressed: () {
-                Navigator.of(context).pop();  // Cierra el cuadro de diálogo
+                Navigator.of(context).pop(); // Cierra el cuadro de diálogo
               },
             ),
             TextButton(
               child: const Text('Eliminar'),
               onPressed: () {
                 setState(() {
-                  vehicles.removeAt(index);  // Elimina la categoría de la lista
+                  vehicles.removeAt(index); // Elimina la categoría de la lista
                 });
-                Navigator.of(context).pop();  // Cierra el cuadro de diálogo después de eliminar
+                Navigator.of(context).pop(); // Cierra el cuadro de diálogo después de eliminar
               },
             ),
           ],
@@ -66,8 +82,108 @@ class _VehiclesPageState extends State<VehiclesPage> {
     );
   }
 
+  // Diálogo para seleccionar filtros
+  void _showFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) { // Cambiado a setStateDialog para diferenciar
+            return AlertDialog(
+              title: const Text('Filtrar vehículos'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButton<String>(
+                    value: tempLocation,
+                    onChanged: (String? newValue) {
+                      setStateDialog(() {
+                        tempLocation = newValue!;
+                      });
+                    },
+                    items: <String>['All', 'Lima', 'Cusco', 'Arequipa']
+                        .map<DropdownMenuItem<String>>((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    hint: const Text('Seleccionar ubicación'),
+                  ),
+                  DropdownButton<String>(
+                    value: tempAvailability,
+                    onChanged: (String? newValue) {
+                      setStateDialog(() {
+                        tempAvailability = newValue!;
+                      });
+                    },
+                    items: <String>['All', 'Available', 'Reserved']
+                        .map<DropdownMenuItem<String>>((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    hint: const Text('Disponibilidad'),
+                  ),
+                  RangeSlider(
+                    values: tempPriceRange,
+                    min: 0,
+                    max: 100,
+                    divisions: 10,
+                    labels: RangeLabels(
+                      tempPriceRange.start.round().toString(),
+                      tempPriceRange.end.round().toString(),
+                    ),
+                    onChanged: (RangeValues newRange) {
+                      setStateDialog(() {
+                        tempPriceRange = newRange;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Cancelar'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    setState(() { // Esto actualizará el estado del widget principal
+                      // Actualiza los filtros reales solo cuando se presiona "Aplicar"
+                      selectedLocation = tempLocation;
+                      selectedAvailability = tempAvailability;
+                      selectedPriceRange = tempPriceRange;
+                    });
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Aplicar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    List<Map<String, String>> filteredVehicles = vehicles.where((vehicle) {
+      final matchesSearchQuery =
+          searchQuery.isEmpty || vehicle['name']!.toLowerCase().contains(searchQuery.toLowerCase());
+      final matchesLocation = selectedLocation == 'All' || vehicle['location'] == selectedLocation;
+      final matchesAvailability =
+          selectedAvailability == 'All' || vehicle['availability'] == selectedAvailability;
+      final price = int.parse(vehicle['price']!);
+      final matchesPrice = price >= selectedPriceRange.start && price <= selectedPriceRange.end;
+
+      return matchesSearchQuery && matchesLocation && matchesAvailability && matchesPrice;
+    }).toList();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Vehicles'),
@@ -77,22 +193,39 @@ class _VehiclesPageState extends State<VehiclesPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            TextField(
+              onChanged: (value) {
+                setState(() {
+                  searchQuery = value;
+                });
+              },
+              decoration: const InputDecoration(
+                labelText: 'Buscar vehículos',
+                prefixIcon: Icon(Icons.search),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: _showFilterDialog,
+              child: const Text('Filtrar'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+            ),
             Expanded(
               child: ListView.builder(
-                itemCount: vehicles.length,
+                itemCount: filteredVehicles.length,
                 itemBuilder: (context, index) {
                   return GestureDetector(
                     onTap: () {
-                      if (vehicles[index]['name'] == 'Scooter Electrónico') {
-                        // Navegar a la página de Scooter Electrónico
+                      if (filteredVehicles[index]['name'] == 'Scooter Electrónico') {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => ScooterCategoryPage(),
                           ),
                         );
-                      } else if (vehicles[index]['name'] == 'Bike') {
-                        // Navegar a la página de Bicicleta
+                      } else if (filteredVehicles[index]['name'] == 'Bike') {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -109,7 +242,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Image.asset(
-                              vehicles[index]['image']!,
+                              filteredVehicles[index]['image']!,
                               height: 100,
                               width: 100,
                               fit: BoxFit.cover,
@@ -120,7 +253,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    vehicles[index]['name']!,
+                                    filteredVehicles[index]['name']!,
                                     style: const TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
@@ -129,7 +262,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    vehicles[index]['info']!,
+                                    filteredVehicles[index]['info']!,
                                     style: const TextStyle(fontSize: 16),
                                   ),
                                 ],
@@ -140,18 +273,16 @@ class _VehiclesPageState extends State<VehiclesPage> {
                                 IconButton(
                                   icon: const Icon(Icons.delete, color: Colors.green),
                                   onPressed: () {
-                                    // Mostrar el diálogo de confirmación al hacer clic en eliminar
                                     _showDeleteDialog(context, index);
                                   },
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.edit, color: Colors.green),
                                   onPressed: () {
-                                    // Lógica para editar el vehículo
                                     Navigator.pushNamed(
                                       context,
                                       '/edit-vehicle',
-                                      arguments: vehicles[index],
+                                      arguments: filteredVehicles[index],
                                     );
                                   },
                                 ),
@@ -167,7 +298,6 @@ class _VehiclesPageState extends State<VehiclesPage> {
             ),
             ElevatedButton(
               onPressed: () {
-                // Lógica para añadir un nuevo vehículo
                 Navigator.pushNamed(context, '/add-vehicle');
               },
               child: const Text('ADD +'),
@@ -181,7 +311,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1, // Establecer el índice actual de la pestaña seleccionada
+        currentIndex: 1,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.star_border),

@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.ruedarent.front_ruedarent_flutter"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "25.1.8937393" // Añade la versión específica del NDK aquí
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
