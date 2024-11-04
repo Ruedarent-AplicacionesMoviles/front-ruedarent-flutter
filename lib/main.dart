@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:front_ruedarent_flutter/src/data/models/user_model.dart';
 import 'package:front_ruedarent_flutter/src/data/models/vehicle_model.dart';
 import 'package:front_ruedarent_flutter/src/data/models/vehicle_type_model.dart';
+import 'package:front_ruedarent_flutter/src/presentation/pages/NotificationsPage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/login/LoginBlocCubit.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/login/LoginPage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/passwordRecovery/PasswordRecoveryPage.dart';
@@ -54,6 +55,7 @@ class MyApp extends StatelessWidget {
           '/password-recovery': (context) => PasswordRecoveryPage(),
           // Agrega otras rutas si es necesario...
           '/vehicles-owner': (context) => const VehiclesPage(),
+          '/notifications': (context) => NotificationsPage(),
           '/add-vehicle': (context) {
             final args = ModalRoute.of(context)!.settings.arguments;
             if (args is Map<String, dynamic> && args.containsKey('vehicleTypeId')) {

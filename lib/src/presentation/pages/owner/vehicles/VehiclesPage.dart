@@ -19,7 +19,6 @@ class _VehiclesPageState extends State<VehiclesPage> {
     _loadVehicleTypes(); // Cargar los tipos de vehículos al iniciar la pantalla
   }
 
-  // Método para cargar los tipos de vehículos desde la base de datos
   Future<void> _loadVehicleTypes() async {
     final data = await VehicleTypeRepository().getVehicleTypes();
     setState(() {
@@ -27,7 +26,6 @@ class _VehiclesPageState extends State<VehiclesPage> {
     });
   }
 
-  // Método para eliminar un tipo de vehículo de la base de datos y de la lista visual
   Future<void> _deleteVehicleType(int index) async {
     int id = vehicleTypes[index].id!;
     await VehicleTypeRepository().deleteVehicleType(id);
@@ -36,7 +34,6 @@ class _VehiclesPageState extends State<VehiclesPage> {
     });
   }
 
-  // Mostrar el cuadro de diálogo de confirmación para eliminar un tipo de vehículo
   void _showDeleteDialog(BuildContext context, int index) {
     showDialog(
       context: context,
@@ -69,6 +66,14 @@ class _VehiclesPageState extends State<VehiclesPage> {
       appBar: AppBar(
         title: const Text('Categorías de Vehículos'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () {
+              Navigator.pushNamed(context, '/notifications');
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -80,7 +85,6 @@ class _VehiclesPageState extends State<VehiclesPage> {
                 itemBuilder: (context, index) {
                   return GestureDetector(
                     onTap: () {
-                      // Navegar a la página de vehículos de la categoría seleccionada
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -100,7 +104,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
                             Image(
                               image: vehicleTypes[index].image != null && vehicleTypes[index].image!.isNotEmpty
                                   ? NetworkImage(vehicleTypes[index].image!) as ImageProvider
-                                  : const AssetImage('assets/images/vehicles/default.png'), // Imagen por defecto
+                                  : const AssetImage('assets/images/vehicles/default.png'),
                               height: 100,
                               width: 100,
                               fit: BoxFit.cover,
@@ -137,16 +141,14 @@ class _VehiclesPageState extends State<VehiclesPage> {
                                 IconButton(
                                   icon: const Icon(Icons.edit, color: Colors.green),
                                   onPressed: () async {
-                                    // Navegar a la página de edición y pasar el tipo de vehículo seleccionado a editar
                                     final result = await Navigator.pushNamed(
                                       context,
                                       '/edit-category-vehicle',
-                                      arguments: vehicleTypes[index], // Pasar el tipo de vehículo a editar
+                                      arguments: vehicleTypes[index],
                                     );
 
-                                    // Verificar si se ha realizado algún cambio
                                     if (result == true) {
-                                      _loadVehicleTypes(); // Recargar la lista de tipos de vehículos si se actualizó uno
+                                      _loadVehicleTypes();
                                     }
                                   },
                                 ),
@@ -162,12 +164,9 @@ class _VehiclesPageState extends State<VehiclesPage> {
             ),
             ElevatedButton(
               onPressed: () async {
-                // Navegar a la página para agregar un nuevo tipo de vehículo y esperar el resultado
                 final result = await Navigator.pushNamed(context, '/add-category-vehicle');
-
-                // Verificar si se ha añadido un nuevo tipo de vehículo
                 if (result == true) {
-                  _loadVehicleTypes(); // Recargar la lista de tipos de vehículos si se agregó uno nuevo
+                  _loadVehicleTypes();
                 }
               },
               child: const Text('AGREGAR +'),

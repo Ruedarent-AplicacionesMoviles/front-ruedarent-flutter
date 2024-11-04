@@ -17,6 +17,25 @@ class NotificationModel {
     required this.read,
   });
 
+  // Método copyWith para crear una copia del objeto con cambios específicos
+  NotificationModel copyWith({
+    int? id,
+    int? userId,
+    String? notificationType,
+    String? content,
+    DateTime? timestamp,
+    bool? read,
+  }) {
+    return NotificationModel(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      notificationType: notificationType ?? this.notificationType,
+      content: content ?? this.content,
+      timestamp: timestamp ?? this.timestamp,
+      read: read ?? this.read,
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,

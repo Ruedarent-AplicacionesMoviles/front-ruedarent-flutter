@@ -92,6 +92,14 @@ class _RentadorVehiclesPageState extends State<RentadorVehiclesPage> {
         title: const Text('Vehículos Disponibles'),
         centerTitle: true,
         backgroundColor: Colors.green.shade300,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () {
+              Navigator.pushNamed(context, '/notifications'); // Redirige a la página de notificaciones
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
