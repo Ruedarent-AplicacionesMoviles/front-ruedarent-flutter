@@ -2,17 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:front_ruedarent_flutter/src/data/models/vehicle_model.dart';
 import 'package:front_ruedarent_flutter/src/data/repositories/vehicle_repository.dart';
 
-class AddVehiclePage extends StatelessWidget {
+class AddVehiclePage extends StatefulWidget {
+  final int vehicleTypeId;
+
+  const AddVehiclePage({Key? key, required this.vehicleTypeId}) : super(key: key);
+
+  @override
+  _AddVehiclePageState createState() => _AddVehiclePageState();
+}
+
+class _AddVehiclePageState extends State<AddVehiclePage> {
   final TextEditingController _brandController = TextEditingController();
   final TextEditingController _modelController = TextEditingController();
-  final TextEditingController _locationController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _photosController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
-  final int vehicleTypeId; // ID del tipo de vehículo que se pasa al constructor
+  // Lista de ubicaciones en Lima Metropolitana
+  final List<String> _ubicaciones = [
+    'Cercado de Lima, Peru', 'Miraflores, Peru', 'San Isidro, Peru', 'San Borja, Peru',
+    'Surco, Peru', 'San Miguel, Peru', 'La Molina, Peru', 'Magdalena, Peru',
+    'Barranco, Peru', 'Los Olivos, Peru', 'San Juan de Lurigancho, Peru',
+    'Villa El Salvador, Peru', 'Villa María del Triunfo, Peru', 'Lince, Peru',
+    'Surquillo, Peru', 'Breña, Peru', 'Comas, Peru', 'Independencia, Peru',
+    'Pueblo Libre, Peru', 'Rímac, Peru'
+  ];
 
-  AddVehiclePage({Key? key, required this.vehicleTypeId}) : super(key: key);
+  String? _selectedUbicacion;
 
   @override
   Widget build(BuildContext context) {
@@ -33,9 +49,27 @@ class AddVehiclePage extends StatelessWidget {
                 controller: _modelController,
                 decoration: const InputDecoration(labelText: 'Modelo'),
               ),
-              TextField(
-                controller: _locationController,
-                decoration: const InputDecoration(labelText: 'Ubicación'),
+              DropdownButtonFormField<String>(
+                value: _selectedUbicacion,
+                items: _ubicaciones.map((ubicacion) {
+                  return DropdownMenuItem(
+                    value: ubicacion,
+                    child: Text(ubicacion),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedUbicacion = value;
+                  });
+                },
+                decoration: const InputDecoration(
+                  labelText: 'Ubicación',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                ),
+                style: const TextStyle(color: Colors.black, fontSize: 16),
+                icon: const Icon(Icons.arrow_drop_down),
+                dropdownColor: Colors.grey[200],
               ),
               TextField(
                 controller: _priceController,
@@ -56,7 +90,7 @@ class AddVehiclePage extends StatelessWidget {
                   // Validar que los campos no estén vacíos
                   if (_brandController.text.isEmpty ||
                       _modelController.text.isEmpty ||
-                      _locationController.text.isEmpty ||
+                      _selectedUbicacion == null ||
                       _priceController.text.isEmpty) {
                     _showErrorDialog(context, 'Todos los campos son obligatorios');
                     return;
@@ -65,10 +99,10 @@ class AddVehiclePage extends StatelessWidget {
                   // Crear una instancia de VehicleModel
                   final newVehicle = VehicleModel(
                     ownerId: 1, // Asignar el ID del propietario según sea necesario
-                    vehicleTypeId: vehicleTypeId,
+                    vehicleTypeId: widget.vehicleTypeId,
                     brand: _brandController.text,
                     model: _modelController.text,
-                    location: _locationController.text,
+                    location: _selectedUbicacion!,
                     availability: 'available', // Valor predeterminado
                     price: double.parse(_priceController.text),
                     photos: _photosController.text.isEmpty ? null : _photosController.text,
