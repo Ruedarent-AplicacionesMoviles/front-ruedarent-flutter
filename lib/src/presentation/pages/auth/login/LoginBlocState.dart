@@ -15,3 +15,4 @@ class LoginError extends LoginBlocState {
   final String message;
   LoginError(this.message);
 }
+

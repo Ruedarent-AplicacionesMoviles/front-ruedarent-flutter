@@ -1,11 +1,9 @@
-// src/data/models/user_model.dart
-
 class UserModel {
   final int? id;
   final String name;
   final String email;
   final String password;
-  final String userType; // 'owner' or 'renter'
+  final String? userType; // Puede ser null o vacío para nuevos usuarios
   final String notificationPreferences;
 
   UserModel({
@@ -13,7 +11,7 @@ class UserModel {
     required this.name,
     required this.email,
     required this.password,
-    required this.userType,
+    this.userType, // Cambiar esto para que sea opcional
     required this.notificationPreferences,
   });
 
@@ -24,7 +22,7 @@ class UserModel {
       'name': name,
       'email': email,
       'password': password,
-      'userType': userType,
+      'userType': userType ?? '', // Guardar como cadena vacía si es null
       'notificationPreferences': notificationPreferences,
     };
   }

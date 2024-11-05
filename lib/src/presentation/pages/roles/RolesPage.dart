@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/user_model.dart';
+import '../../../data/repositories/user_repository.dart';
 
 class RolesPage extends StatelessWidget {
   final UserModel user;
+  final UserRepository _userRepository = UserRepository();
 
-  const RolesPage({super.key, required this.user});
+  RolesPage({super.key, required this.user});
 
   @override
   Widget build(BuildContext context) {
     final UserModel user = ModalRoute.of(context)!.settings.arguments as UserModel;
     final int? userId = user.id;
-
 
     return Scaffold(
       appBar: AppBar(
@@ -33,7 +34,8 @@ class RolesPage extends StatelessWidget {
                 context,
                 imagePath: 'assets/images/roles/propietario.jpg',
                 label: 'Propietario',
-                onTap: () {
+                onTap: () async {
+                  await _userRepository.updateUserRole(userId!, 'owner');
                   Navigator.pushNamed(context, '/vehicles-owner');
                   print("Propietario seleccionado");
                 },
@@ -43,9 +45,9 @@ class RolesPage extends StatelessWidget {
                 context,
                 imagePath: 'assets/images/roles/rentador.jpg',
                 label: 'Rentador',
-                onTap: () {
-                  Navigator.pushNamed(context, '/vehicles-renter',
-                  arguments: userId);
+                onTap: () async {
+                  await _userRepository.updateUserRole(userId!, 'renter');
+                  Navigator.pushNamed(context, '/vehicles-renter', arguments: userId);
                   print("Rentador seleccionado");
                 },
               ),

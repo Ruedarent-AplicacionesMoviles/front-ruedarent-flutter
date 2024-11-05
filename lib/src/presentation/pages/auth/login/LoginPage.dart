@@ -25,8 +25,15 @@ class _LoginPageState extends State<LoginPage> {
       body: BlocConsumer<LoginBlocCubit, LoginBlocState>(
         listener: (context, state) {
           if (state is LoginSuccess) {
-            // Navegar a la pantalla de roles después del login exitoso
-            Navigator.pushReplacementNamed(context, '/roles', arguments: state.user);
+            // Verificar el rol del usuario y redirigir a la pantalla adecuada
+            if (state.user.userType == 'owner') {
+              Navigator.pushReplacementNamed(context, '/vehicles-owner');
+            } else if (state.user.userType == 'renter') {
+              Navigator.pushReplacementNamed(context, '/vehicles-renter');
+            } else {
+              // Si el usuario no tiene un rol asignado, enviarlo a seleccionar rol
+              Navigator.pushReplacementNamed(context, '/roles', arguments: state.user);
+            }
           } else if (state is LoginError) {
             // Mostrar mensaje de error si el login falla
             ScaffoldMessenger.of(context).showSnackBar(

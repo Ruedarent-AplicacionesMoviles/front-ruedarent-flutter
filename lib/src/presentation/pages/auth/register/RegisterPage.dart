@@ -13,6 +13,7 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   late RegisterBlocCubit _registerBlocCubit;
   bool isAcceptedTerms = false;
+  String? selectedRole; // Variable para almacenar el rol seleccionado
 
   @override
   void initState() {
@@ -21,7 +22,14 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   void _confirmRegistration() {
-    _registerBlocCubit.register();
+    if (selectedRole != null) {
+      _registerBlocCubit.setUserRole(selectedRole!); // Asignar el rol seleccionado
+      _registerBlocCubit.register();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, seleccione un rol')),
+      );
+    }
   }
 
   @override
@@ -105,6 +113,33 @@ class _RegisterPageState extends State<RegisterPage> {
                           onChanged: _registerBlocCubit.changeConfirmPassword,
                           labelText: 'Confirmar Contraseña',
                           isPassword: true,
+                        ),
+                        const SizedBox(height: 20),
+                        // Selector de rol
+                        const Text('Seleccione su rol:', style: TextStyle(fontSize: 16)),
+                        Row(
+                          children: [
+                            Radio<String>(
+                              value: 'owner',
+                              groupValue: selectedRole,
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedRole = value;
+                                });
+                              },
+                            ),
+                            const Text('Propietario'),
+                            Radio<String>(
+                              value: 'renter',
+                              groupValue: selectedRole,
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedRole = value;
+                                });
+                              },
+                            ),
+                            const Text('Rentador'),
+                          ],
                         ),
                         const SizedBox(height: 20),
                         Row(

@@ -26,44 +26,22 @@ class _VehiclesPageState extends State<VehiclesPage> {
     });
   }
 
-  Future<void> _deleteVehicleType(int index) async {
-    int id = vehicleTypes[index].id!;
-    await VehicleTypeRepository().deleteVehicleType(id);
-    setState(() {
-      vehicleTypes.removeAt(index);
-    });
+  Future<void> _logout() async {
+    // Aquí puedes limpiar cualquier dato de sesión, como un token de autenticación
+    Navigator.of(context).popUntil((route) => route.isFirst); // Cierra todas las pantallas hasta llegar a la primera
+    Navigator.pushReplacementNamed(context, '/login'); // Redirige a la pantalla de login
   }
-
-  // void _showDeleteDialog(BuildContext context, int index) {
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         title: const Text('¿Estás seguro de que deseas eliminar este tipo de vehículo?'),
-  //         actions: <Widget>[
-  //           TextButton(
-  //             child: const Text('Cancelar'),
-  //             onPressed: () {
-  //               Navigator.of(context).pop();
-  //             },
-  //           ),
-  //           TextButton(
-  //             child: const Text('Eliminar'),
-  //             onPressed: () {
-  //               _deleteVehicleType(index);
-  //               Navigator.of(context).pop();
-  //             },
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            _logout(); // Llama a _logout al presionar el botón de retroceso
+          },
+        ),
         title: const Text('Categorías de Vehículos'),
         centerTitle: true,
         actions: [
@@ -130,30 +108,6 @@ class _VehiclesPageState extends State<VehiclesPage> {
                                 ],
                               ),
                             ),
-                            // Column(
-                            //   children: [
-                            //     IconButton(
-                            //       icon: const Icon(Icons.delete, color: Colors.green),
-                            //       onPressed: () {
-                            //         _showDeleteDialog(context, index);
-                            //       },
-                            //     ),
-                            //     IconButton(
-                            //       icon: const Icon(Icons.edit, color: Colors.green),
-                            //       onPressed: () async {
-                            //         final result = await Navigator.pushNamed(
-                            //           context,
-                            //           '/edit-category-vehicle',
-                            //           arguments: vehicleTypes[index],
-                            //         );
-                            //
-                            //         if (result == true) {
-                            //           _loadVehicleTypes();
-                            //         }
-                            //       },
-                            //     ),
-                            //   ],
-                            // ),
                           ],
                         ),
                       ),
@@ -162,20 +116,6 @@ class _VehiclesPageState extends State<VehiclesPage> {
                 },
               ),
             ),
-            // ElevatedButton(
-            //   onPressed: () async {
-            //     final result = await Navigator.pushNamed(context, '/add-category-vehicle');
-            //     if (result == true) {
-            //       _loadVehicleTypes();
-            //     }
-            //   },
-            //   child: const Text('AGREGAR +'),
-            //   style: ElevatedButton.styleFrom(
-            //     backgroundColor: Colors.green,
-            //     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            //     textStyle: const TextStyle(fontSize: 18),
-            //   ),
-            // ),
           ],
         ),
       ),

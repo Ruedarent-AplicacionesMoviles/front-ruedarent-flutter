@@ -58,6 +58,17 @@ class UserRepository {
     );
   }
 
+  // Actualizar el rol del usuario
+  Future<int> updateUserRole(int userId, String role) async {
+    final db = await _databaseHelper.database;
+    return await db.update(
+      'User',
+      {'userType': role},
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+  }
+
   // Eliminar un usuario
   Future<int> deleteUser(int id) async {
     final db = await _databaseHelper.database;
@@ -78,3 +89,4 @@ class UserRepository {
     });
   }
 }
+

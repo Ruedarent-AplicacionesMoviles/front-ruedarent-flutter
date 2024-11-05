@@ -13,6 +13,7 @@ class RegisterBlocCubit extends Cubit<RegisterBlocState> {
   final _emailController = BehaviorSubject<String>();
   final _passwordController = BehaviorSubject<String>();
   final _confirmPasswordController = BehaviorSubject<String>();
+  String? _userRole; // Variable para almacenar el rol seleccionado
 
   // Streams para los campos
   Stream<String> get nameStream => _nameController.stream;
@@ -21,12 +22,15 @@ class RegisterBlocCubit extends Cubit<RegisterBlocState> {
   Stream<String> get passwordStream => _passwordController.stream;
   Stream<String> get confirmPasswordStream => _confirmPasswordController.stream;
 
-  // Validaciones
+  // Método para cambiar el rol del usuario
+  void setUserRole(String role) {
+    _userRole = role;
+  }
+
+  // Validaciones de cada campo
   void changeName(String name) {
     if (name.trim().isEmpty) {
       _nameController.sink.addError('Por favor ingrese su nombre');
-    } else if (!RegExp(r"^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s]+$").hasMatch(name)) {
-      _nameController.sink.addError('El nombre solo debe contener letras');
     } else if (name.length < 2) {
       _nameController.sink.addError('El nombre debe tener al menos 2 caracteres');
     } else {
@@ -37,8 +41,6 @@ class RegisterBlocCubit extends Cubit<RegisterBlocState> {
   void changeSurname(String surname) {
     if (surname.trim().isEmpty) {
       _surnameController.sink.addError('Por favor ingrese sus apellidos');
-    } else if (!RegExp(r"^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s]+$").hasMatch(surname)) {
-      _surnameController.sink.addError('El apellido solo debe contener letras');
     } else if (surname.length < 2) {
       _surnameController.sink.addError('El apellido debe tener al menos 2 caracteres');
     } else {
@@ -54,7 +56,7 @@ class RegisterBlocCubit extends Cubit<RegisterBlocState> {
     if (email.length < 3) {
       _emailController.sink.addError('El email debe tener más de 3 caracteres');
     } else if (!emailRegExp.hasMatch(email)) {
-      _emailController.sink.addError('El email debe ser válido (ej: usuario@dominio.com)');
+      _emailController.sink.addError('El email debe ser válido');
     } else {
       _emailController.sink.add(email);
     }
@@ -62,15 +64,7 @@ class RegisterBlocCubit extends Cubit<RegisterBlocState> {
 
   void changePassword(String password) {
     if (password.length < 6) {
-      _passwordController.sink.addError('Al menos 6 caracteres');
-    } else if (!password.contains(RegExp(r'[A-Z]'))) {
-      _passwordController.sink.addError('Debe contener una mayúscula');
-    } else if (!password.contains(RegExp(r'[a-z]'))) {
-      _passwordController.sink.addError('Debe contener una minúscula');
-    } else if (!password.contains(RegExp(r'[0-9]'))) {
-      _passwordController.sink.addError('Debe contener un número');
-    } else if (!password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
-      _passwordController.sink.addError('Debe contener un carácter especial');
+      _passwordController.sink.addError('La contraseña debe tener al menos 6 caracteres');
     } else {
       _passwordController.sink.add(password);
     }
@@ -99,12 +93,17 @@ class RegisterBlocCubit extends Cubit<RegisterBlocState> {
     try {
       emit(RegisterLoading());
 
+      if (_userRole == null) {
+        emit(RegisterError('Por favor, seleccione un rol.'));
+        return;
+      }
+
       UserRepository userRepo = UserRepository();
       UserModel newUser = UserModel(
         name: _nameController.value.trim(),
         email: _emailController.value.trim(),
         password: _passwordController.value.trim(),
-        userType: 'renter', // Puedes modificar según tu lógica de negocio
+        userType: _userRole, // Usar el rol seleccionado
         notificationPreferences: 'all', // Modificar según tu lógica
       );
 
