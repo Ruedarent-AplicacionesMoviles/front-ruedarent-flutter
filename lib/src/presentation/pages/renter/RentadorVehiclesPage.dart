@@ -56,6 +56,12 @@ class _RentadorVehiclesPageState extends State<RentadorVehiclesPage> {
     }
   }
 
+  // Método para desloguearse
+  void _logout() {
+    // Aquí puedes limpiar cualquier estado de sesión, si estás usando Provider o SharedPreferences
+    Navigator.pushReplacementNamed(context, '/login');
+  }
+
   // Manejar la navegación al cambiar de índice en la barra de navegación
   void _onItemTapped(int index) {
     setState(() {
@@ -77,9 +83,9 @@ class _RentadorVehiclesPageState extends State<RentadorVehiclesPage> {
       // Navegar a la página de filtros
         _navigateToFilters();
         break;
-        case 3: // Aquí se agrega el caso para "Reservations"
-      Navigator.pushNamed(context, '/reservations');
-      break;
+      case 3: // Aquí se agrega el caso para "Reservations"
+        Navigator.pushNamed(context, '/reservations');
+        break;
     }
   }
 
@@ -101,6 +107,10 @@ class _RentadorVehiclesPageState extends State<RentadorVehiclesPage> {
             onPressed: () {
               Navigator.pushNamed(context, '/notifications'); // Redirige a la página de notificaciones
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout), // Icono de logout
+            onPressed: _logout, // Llamar al método de logout
           ),
         ],
       ),
@@ -209,8 +219,8 @@ class _RentadorVehiclesPageState extends State<RentadorVehiclesPage> {
             label: 'Filtros',
           ),
           BottomNavigationBarItem(
-              icon: Icon(Icons.list),
-          label: 'Reservations',
+            icon: Icon(Icons.list),
+            label: 'Reservaciones',
           )
         ],
         currentIndex: _selectedIndex,
