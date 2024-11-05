@@ -77,6 +77,9 @@ class _RentadorVehiclesPageState extends State<RentadorVehiclesPage> {
       // Navegar a la página de filtros
         _navigateToFilters();
         break;
+        case 3: // Aquí se agrega el caso para "Reservations"
+      Navigator.pushNamed(context, '/reservations');
+      break;
     }
   }
 
@@ -191,6 +194,7 @@ class _RentadorVehiclesPageState extends State<RentadorVehiclesPage> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.category),
@@ -204,6 +208,10 @@ class _RentadorVehiclesPageState extends State<RentadorVehiclesPage> {
             icon: Icon(Icons.filter_list),
             label: 'Filtros',
           ),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.list),
+          label: 'Reservations',
+          )
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.green,

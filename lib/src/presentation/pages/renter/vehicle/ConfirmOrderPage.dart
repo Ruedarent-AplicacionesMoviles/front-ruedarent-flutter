@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:front_ruedarent_flutter/src/data/models/address_model.dart';
 import 'package:front_ruedarent_flutter/src/data/models/vehicle_model.dart';
-import 'package:front_ruedarent_flutter/src/presentation/pages/renter/RentadorVehiclesPage.dart'; // Importar la página de categorías
+import 'package:front_ruedarent_flutter/src/data/repositories/reservation_repository.dart';
+import 'package:front_ruedarent_flutter/src/data/repositories/vehicle_repository.dart'; // Añadir esta importación
+import 'package:front_ruedarent_flutter/src/presentation/pages/renter/RentadorVehiclesPage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/renter/address/AddressSelectionPage.dart';
 
+import '../../../../data/UserProvider.dart';
+import '../../../../data/models/reservation_model.dart';
+
 class ConfirmOrderPage extends StatefulWidget {
-  final VehicleModel vehicle; // Recibe el vehículo seleccionado
+  final VehicleModel vehicle;
 
   const ConfirmOrderPage({Key? key, required this.vehicle}) : super(key: key);
 
@@ -14,25 +20,131 @@ class ConfirmOrderPage extends StatefulWidget {
 }
 
 class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
-  AddressModel? selectedAddress; // Dirección seleccionada para la orden
-  bool isVehicleDeleted = false; // Variable para rastrear si el vehículo ha sido eliminado
+  AddressModel? selectedAddress;
+  bool isVehicleDeleted = false;
+  final VehicleRepository _vehicleRepository = VehicleRepository();// Añadir esta línea
+  final ReservationRepository _reservationRepository = ReservationRepository();
+  late final UserProvider _userProvider;
 
-  // Navegar a la página de selección de direcciones
-  Future<void> _selectAddress() async {
-    final AddressModel? address = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddressSelectionPage(userId: 1), // Asumimos un userId fijo (puedes ajustarlo)
-      ),
-    );
 
-    if (address != null) {
-      setState(() {
-        selectedAddress = address; // Actualizar la dirección seleccionada
-      });
+
+
+  @override
+  void initState() {
+    super.initState();
+    // Imprimir detalles del vehículo al iniciar
+    print('Iniciando ConfirmOrderPage');
+    print('ID del vehículo: ${widget.vehicle.id}');
+    print('Marca: ${widget.vehicle.brand}');
+    print('Modelo: ${widget.vehicle.model}');
+    _userProvider = context.read<UserProvider>();
+  }
+
+  Future<void> _createReservation(int userId) async {
+    try {
+      // Crear la reserva con los datos relevantes
+      // Imprimir los valores que se usarán para crear la reserva
+      print('Creando reserva con los siguientes valores:');
+      print('Renter ID: $userId');
+      print('Vehicle ID: ${widget.vehicle.id}');
+      print('Start Date: ${DateTime.now()}');
+      print('End Date: ${DateTime.now().add(const Duration(days: 7))}');
+      print('Pickup Location: a');
+      print('Dropoff Location: b');
+      print('Reservation Status: pending');
+      print('Total Price: ${widget.vehicle.price}');
+      print('Payment Method: cash');
+      ReservationModel reservation = ReservationModel(
+        renterId: userId,
+        vehicleId: widget.vehicle.id!,
+        startDate: DateTime.now(),
+        endDate: DateTime.now().add(const Duration(days: 7)), // Ejemplo, debes obtener las fechas de la interfaz
+        pickupLocation: 'a',
+        dropoffLocation: 'b',
+        reservationStatus: 'confirmed',
+        totalPrice: widget.vehicle.price,
+        paymentMethod: 'cash', // Ejemplo, debes obtener el método de pago de la interfaz
+      );
+
+      // Guardar la reserva en la base de datos o enviar a un servicio
+      await _reservationRepository.insertReservation(reservation);
+    } catch (e) {
+      // Manejar el error de creación de la reserva
+      print('Error al crear la reserva: $e');
     }
   }
 
+
+  // Método para actualizar la disponibilidad del vehículo
+  Future<void> _setVehicleNotAvailable() async {
+    print('Intentando actualizar disponibilidad del vehículo');
+    print('ID del vehículo a actualizar: ${widget.vehicle.id}');
+
+    if (widget.vehicle.id == null) {
+      print('Error: ID del vehículo es null');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error: ID del vehículo no disponible'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      print('Llamando a updateVehicleAvailability');
+      final result = await _vehicleRepository.updateVehicleAvailability(widget.vehicle.id!);
+      print('Resultado de la actualización: $result');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Vehículo reservado exitosamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      print('Error al actualizar disponibilidad: $e');
+      print('Stack trace: $stackTrace');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al actualizar la disponibilidad: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _selectAddress() async {
+    print('Iniciando selección de dirección');
+    print('Llamando a _setVehicleNotAvailable');
+    await _setVehicleNotAvailable();
+
+    print('Actualizando estado con nueva dirección');
+
+    await _createReservation(_userProvider.userId);
+
+    final AddressModel? address = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddressSelectionPage(userId: _userProvider.userId),
+      ),
+    );
+
+    print('Dirección seleccionada: ${address?.direccion}');
+
+    if (address != null) {
+
+
+      setState(() {
+        selectedAddress = address;
+      });
+
+    }
+  }
   // Mostrar un diálogo de confirmación antes de eliminar el vehículo
   Future<void> _confirmDeleteVehicle() async {
     showDialog(

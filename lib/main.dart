@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:front_ruedarent_flutter/src/data/UserProvider.dart';
 import 'package:front_ruedarent_flutter/src/data/models/user_model.dart';
 import 'package:front_ruedarent_flutter/src/data/models/vehicle_model.dart';
 import 'package:front_ruedarent_flutter/src/data/models/vehicle_type_model.dart';
+import 'package:front_ruedarent_flutter/src/data/repositories/user_repository.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/NotificationsPage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/login/LoginBlocCubit.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/auth/login/LoginPage.dart';
@@ -16,11 +18,17 @@ import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/ve
 import 'package:front_ruedarent_flutter/src/presentation/pages/owner/vehicles/vehicle/EditVehiclePage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/profile/UserProfilePage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/renter/RentadorVehiclesPage.dart';
+import 'package:front_ruedarent_flutter/src/presentation/pages/reservation/ReservationPage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/roles/RolesPage.dart';
+import 'package:provider/provider.dart';
 
 
 void main() {
-  runApp(const MyApp());
+  Provider.debugCheckInvalidValueType = null;
+  runApp(ChangeNotifierProvider(
+    create: (context) => UserProvider(),
+    child: MyApp(),
+  ),);
 }
 
 class MyApp extends StatelessWidget {
@@ -28,10 +36,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
+    return MultiProvider(
+        providers: [
+          Provider<UserProvider>(
+            create: (_) => UserProvider(),
+          ),
+          Provider<UserRepository>(
+            create: (context) => UserRepository(),
+          ),
+          // Agrega más proveedores aquí según sea necesario
+        ],
+    child: MultiBlocProvider(
       providers: [
         BlocProvider<LoginBlocCubit>(
-          create: (context) => LoginBlocCubit(),
+          create: (context) => LoginBlocCubit(UserRepository(), UserProvider())
         ),
         BlocProvider<RegisterBlocCubit>(
           create: (context) => RegisterBlocCubit(),
@@ -81,6 +99,7 @@ class MyApp extends StatelessWidget {
               return const Scaffold(body: Center(child: Text('Error: argumentos inválidos')));
             }
           },
+          '/reservations': (context) => ReservationPage(), // Añade esta línea
           '/add-category-vehicle': (context) => AddCategoryPage(),
           '/vehicles-renter': (context) => const RentadorVehiclesPage(),
 
@@ -95,6 +114,7 @@ class MyApp extends StatelessWidget {
 
         },
       ),
+    ),
     );
   }
 }

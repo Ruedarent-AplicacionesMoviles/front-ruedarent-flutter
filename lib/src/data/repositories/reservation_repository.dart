@@ -17,6 +17,19 @@ class ReservationRepository {
     );
   }
 
+  Future<List<ReservationModel>> getReservationsByUserId(int userId) async {
+    final db = await _databaseHelper.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'Reservation',
+      where: 'renterId = ?',
+      whereArgs: [userId],
+    );
+
+    return List.generate(maps.length, (i) {
+      return ReservationModel.fromMap(maps[i]);
+    });
+  }
+
   // Obtener una reserva por ID
   Future<ReservationModel?> getReservationById(int id) async {
     final db = await _databaseHelper.database;
@@ -54,7 +67,7 @@ class ReservationRepository {
   }
 
   // Eliminar una reserva
-  Future<int> deleteReservation(int id) async {
+  Future<int> deleteReservation(int? id) async {
     final db = await _databaseHelper.database;
     return await db.delete(
       'Reservation',

@@ -134,4 +134,39 @@ class VehicleRepository {
     final vehicleType = await vehicleTypeRepository.getVehicleTypeByName(name);
     return vehicleType?.id ?? -1; // Retorna -1 si no se encuentra
   }
+
+  Future<int> updateVehicleAvailability(int vehicleId) async {
+    final db = await _databaseHelper.database;
+
+    // Consulta la disponibilidad actual del vehículo
+    final List<Map<String, dynamic>> currentAvailability = await db.query(
+      'Vehicle',
+      columns: ['availability'],
+      where: 'id = ?',
+      whereArgs: [vehicleId],
+    );
+
+    // Verifica si se encontró el vehículo
+    if (currentAvailability.isNotEmpty) {
+      String currentAvailabilityStatus = currentAvailability.first['availability'];
+
+      // Define el nuevo estado basado en el estado actual
+      String newAvailabilityStatus = (currentAvailabilityStatus == 'available')
+          ? 'not available'
+          : 'available';
+
+      // Actualiza la disponibilidad del vehículo
+      return await db.update(
+        'Vehicle',
+        {'availability': newAvailabilityStatus},
+        where: 'id = ?',
+        whereArgs: [vehicleId],
+      );
+    } else {
+      throw Exception('Vehicle not found');
+    }
+  }
+
+
+
 }

@@ -8,6 +8,10 @@ class RolesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final UserModel user = ModalRoute.of(context)!.settings.arguments as UserModel;
+    final int? userId = user.id;
+
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Selecciona un rol'),
@@ -40,7 +44,8 @@ class RolesPage extends StatelessWidget {
                 imagePath: 'assets/images/roles/rentador.jpg',
                 label: 'Rentador',
                 onTap: () {
-                  Navigator.pushNamed(context, '/vehicles-renter');
+                  Navigator.pushNamed(context, '/vehicles-renter',
+                  arguments: userId);
                   print("Rentador seleccionado");
                 },
               ),

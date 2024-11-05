@@ -1,11 +1,17 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rxdart/rxdart.dart';
+import '../../../../data/UserProvider.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../../data/repositories/user_repository.dart';
 import 'LoginBlocState.dart';
 
 class LoginBlocCubit extends Cubit<LoginBlocState> {
-  LoginBlocCubit() : super(LoginInitial());
+
+  final UserRepository _userRepository;
+  final UserProvider _userProvider;
+
+  LoginBlocCubit(this._userRepository, this._userProvider) : super(LoginInitial());
+
 
   final _emailController = BehaviorSubject<String>();
   final _passwordController = BehaviorSubject<String>();
@@ -44,34 +50,32 @@ class LoginBlocCubit extends Cubit<LoginBlocState> {
       emit(LoginLoading());
 
       if (isTestUser) {
-        // Login automático para usuario de prueba
         UserModel testUser = UserModel(
           name: 'Test User',
           email: 'testuser@domain.com',
           password: 'Password123!',
-          userType: 'owner', // o el tipo de usuario que prefieras
+          userType: 'owner',
           notificationPreferences: 'all',
         );
         emit(LoginSuccess(testUser));
+        _userProvider.setUserId(testUser.id!); //
         return;
       }
 
-      UserRepository userRepo = UserRepository();
       final email = _emailController.value.trim();
       final password = _passwordController.value.trim();
 
-      // Verificar si el usuario existe y las credenciales son correctas
-      UserModel? user = await userRepo.getUserByEmail(email);
+      UserModel? user = await _userRepository.getUserByEmail(email);
       if (user == null || user.password != password) {
         emit(LoginError('Correo o contraseña incorrectos.'));
       } else {
-        emit(LoginSuccess(user)); // Si el login es exitoso, emitir el éxito
+        emit(LoginSuccess(user));
+        _userProvider.setUserId(user.id!);
       }
     } catch (e) {
       emit(LoginError('Error al iniciar sesión: $e'));
     }
   }
-
   @override
   Future<void> close() {
     _emailController.close();

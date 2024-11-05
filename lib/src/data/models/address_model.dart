@@ -30,6 +30,8 @@ class AddressModel {
       userId: map['userId'],
     );
   }
+
+
 }
 
 
