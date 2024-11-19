@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'RegisterBlocCubit.dart';
 import 'RegisterBlocState.dart';
+import 'TermsAndConditionsPage.dart'; // Importa la nueva página con texto estático.
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -54,7 +55,8 @@ class _RegisterPageState extends State<RegisterPage> {
           } else if (state is RegisterSuccess) {
             Navigator.pushReplacementNamed(context, '/login');
           } else if (state is RegisterError) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
+            ScaffoldMessenger.of(context)
+                .showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
         child: Stack(
@@ -81,7 +83,9 @@ class _RegisterPageState extends State<RegisterPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('REGISTRARSE', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                        const Text('REGISTRARSE',
+                            style: TextStyle(
+                                fontSize: 24, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 20),
                         _buildTextField(
                           stream: _registerBlocCubit.nameStream,
@@ -116,7 +120,8 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(height: 20),
                         // Selector de rol
-                        const Text('Seleccione su rol:', style: TextStyle(fontSize: 16)),
+                        const Text('Seleccione su rol:',
+                            style: TextStyle(fontSize: 16)),
                         Row(
                           children: [
                             Radio<String>(
@@ -142,6 +147,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           ],
                         ),
                         const SizedBox(height: 20),
+                        // Checkbox con navegación a TermsAndConditionsPage
                         Row(
                           children: [
                             Checkbox(
@@ -152,10 +158,25 @@ class _RegisterPageState extends State<RegisterPage> {
                                 });
                               },
                             ),
-                            const Expanded(
-                              child: Text(
-                                'Acepto los Términos de servicio y la Política de privacidad',
-                                style: TextStyle(fontSize: 14),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                      const TermsAndConditionsPage(),
+                                    ),
+                                  );
+                                },
+                                child: const Text(
+                                  'Acepto los Términos de servicio y la Política de privacidad',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    decoration: TextDecoration.underline,
+                                    color: Colors.blue, // Estilo de enlace
+                                  ),
+                                ),
                               ),
                             ),
                           ],
@@ -166,12 +187,16 @@ class _RegisterPageState extends State<RegisterPage> {
                             stream: _registerBlocCubit.formValidStream,
                             builder: (context, snapshot) {
                               return ElevatedButton(
-                                onPressed: (snapshot.hasData && isAcceptedTerms)
+                                onPressed: (snapshot.hasData &&
+                                    isAcceptedTerms)
                                     ? _confirmRegistration
                                     : null,
                                 child: const Text('CONFIRMAR'),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: (snapshot.hasData && isAcceptedTerms) ? Colors.green : Colors.grey,
+                                  backgroundColor: (snapshot.hasData &&
+                                      isAcceptedTerms)
+                                      ? Colors.green
+                                      : Colors.grey,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10.0),
                                   ),
