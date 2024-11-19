@@ -12,6 +12,7 @@ class NotificationsPage extends StatefulWidget {
 class _NotificationsPageState extends State<NotificationsPage> {
   List<NotificationModel> notifications = [];
   final NotificationRepository _notificationRepository = NotificationRepository();
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -20,43 +21,48 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   Future<void> _loadNotifications() async {
-    // Ejemplo de notificaciones simuladas
-    notifications = [
-      NotificationModel(
-        id: 1,
-        userId: 1,
-        notificationType: 'Reservación Nueva',
-        content: 'Tienes una nueva reservación.',
-        timestamp: DateTime.now(),
-        read: false,
-      ),
-      NotificationModel(
-        id: 2,
-        userId: 1,
-        notificationType: 'Cambio de Reservación',
-        content: 'Una de tus reservaciones ha sido actualizada.',
-        timestamp: DateTime.now().subtract(Duration(hours: 2)),
-        read: true,
-      ),
-      NotificationModel(
-        id: 3,
-        userId: 1,
-        notificationType: 'Recordatorio',
-        content: 'No olvides confirmar tu reservación.',
-        timestamp: DateTime.now().subtract(Duration(days: 1)),
-        read: false,
-      ),
-    ];
-
-    setState(() {});
+    try {
+      // Cambiar el ID del usuario según el rol actual
+      const int ownerId = 1; // Ejemplo: Usuario propietario
+      notifications = await _notificationRepository.getNotificationsByUser(ownerId);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al cargar notificaciones: $e')),
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
+  Future<void> _markAsRead(int notificationId, int index) async {
+    try {
+      await _notificationRepository.markAsRead(notificationId);
+      setState(() {
+        notifications[index] = notifications[index].copyWith(read: true);
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al marcar como leída: $e')),
+      );
+    }
+  }
 
   Future<void> _deleteNotification(int notificationId, int index) async {
-    await _notificationRepository.deleteNotification(notificationId);
-    setState(() {
-      notifications.removeAt(index);
-    });
+    try {
+      await _notificationRepository.deleteNotification(notificationId);
+      setState(() {
+        notifications.removeAt(index);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Notificación eliminada')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al eliminar notificación: $e')),
+      );
+    }
   }
 
   @override
@@ -66,7 +72,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
         title: const Text('Notificaciones'),
         centerTitle: true,
       ),
-      body: notifications.isNotEmpty
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : notifications.isNotEmpty
           ? ListView.builder(
         itemCount: notifications.length,
         itemBuilder: (context, index) {
@@ -76,9 +84,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
             direction: DismissDirection.endToStart,
             onDismissed: (direction) {
               _deleteNotification(notification.id!, index);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Notificación eliminada')),
-              );
             },
             background: Container(
               color: Colors.red,
@@ -94,9 +99,16 @@ class _NotificationsPageState extends State<NotificationsPage> {
               child: ListTile(
                 title: Text(notification.notificationType),
                 subtitle: Text(notification.content),
-                trailing: Icon(
-                  notification.read ? Icons.done : Icons.markunread,
-                  color: notification.read ? Colors.green : Colors.grey,
+                trailing: IconButton(
+                  icon: Icon(
+                    notification.read ? Icons.done : Icons.markunread,
+                    color: notification.read ? Colors.green : Colors.grey,
+                  ),
+                  onPressed: () {
+                    if (!notification.read) {
+                      _markAsRead(notification.id!, index);
+                    }
+                  },
                 ),
               ),
             ),

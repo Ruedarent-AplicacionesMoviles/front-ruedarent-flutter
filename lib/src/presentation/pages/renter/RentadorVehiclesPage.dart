@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:front_ruedarent_flutter/src/data/repositories/vehicle_type_repository.dart';
+import 'package:front_ruedarent_flutter/src/data/repositories/notification_repository.dart';
 import 'package:front_ruedarent_flutter/src/data/models/vehicle_type_model.dart';
+import 'package:front_ruedarent_flutter/src/data/models/notification_model.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/renter/category/CategoryVehiclesForRenterPage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/renter/filter/FiltersPage.dart';
 
@@ -139,14 +141,36 @@ class _RentadorVehiclesPageState extends State<RentadorVehiclesPage> {
                 itemCount: filteredVehicleTypes.length,
                 itemBuilder: (context, index) {
                   return InkWell(
-                    onTap: () {
+                    onTap: () async {
+                      // Simula la creación de un pedido
+                      final int ownerId = 2; // Cambiar al ID real del Propietario
+                      final int renterId = 1; // Cambiar al ID real del Rentador (usuario actual)
+                      final vehicleName = filteredVehicleTypes[index].name;
+
+                      // Crear la notificación para el propietario
+                      final notificationRepository = NotificationRepository();
+                      final notification = NotificationModel(
+                        userId: ownerId, // ID del propietario que recibe la notificación
+                        notificationType: 'new_reservation',
+                        content: 'Tienes una nueva reservación para tu $vehicleName.',
+                        timestamp: DateTime.now(),
+                        read: false,
+                      );
+
+                      await notificationRepository.insertNotification(notification);
+
+                      // Navegar a la página de la categoría del vehículo
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => CategoryVehiclesForRenterPage(
-                            categoryName: filteredVehicleTypes[index].name,
+                            categoryName: vehicleName,
                           ),
                         ),
+                      );
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Se ha enviado una notificación al propietario.')),
                       );
                     },
                     child: Card(

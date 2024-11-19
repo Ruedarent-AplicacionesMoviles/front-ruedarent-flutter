@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:front_ruedarent_flutter/src/data/repositories/notification_repository.dart';
+import 'package:front_ruedarent_flutter/src/data/models/notification_model.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/renter/RentadorVehiclesPage.dart';
 
 class PaymentConfirmationPage extends StatelessWidget {
@@ -10,6 +12,38 @@ class PaymentConfirmationPage extends StatelessWidget {
     required this.cardType,
     required this.lastDigits,
   }) : super(key: key);
+
+  // Método para crear una notificación para el propietario
+  Future<void> _createNotificationForOwner(BuildContext context) async {
+    try {
+      final notificationRepository = NotificationRepository();
+
+      // Supongamos que el propietario tiene userId = 1 (ajústalo a tu lógica real)
+      const int ownerId = 1;
+
+      // Crear el modelo de notificación
+      final notification = NotificationModel(
+        userId: ownerId,
+        notificationType: 'Reservación Nueva',
+        content: 'Se ha confirmado una nueva reservación para tu vehículo.',
+        timestamp: DateTime.now(),
+        read: false,
+      );
+
+      // Insertar la notificación en la base de datos
+      await notificationRepository.insertNotification(notification);
+
+      // Mostrar mensaje de éxito (opcional)
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Notificación enviada al propietario')),
+      );
+    } catch (e) {
+      // Manejo de errores
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al crear notificación: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,14 +83,17 @@ class PaymentConfirmationPage extends StatelessWidget {
             ),
             const Spacer(),
             ElevatedButton.icon(
-              onPressed: () {
-                // Navegar a CategoriesPage.dart cuando se presiona "Finalizar compra"
+              onPressed: () async {
+                // Crear la notificación para el propietario
+                await _createNotificationForOwner(context);
+
+                // Navegar de vuelta a la página de vehículos
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => RentadorVehiclesPage(), // Asegúrate de que CategoriesPage está bien importado
+                    builder: (context) => RentadorVehiclesPage(),
                   ),
-                      (Route<dynamic> route) => false, // Eliminar el historial de navegación
+                      (Route<dynamic> route) => false,
                 );
               },
               icon: const Icon(Icons.arrow_forward),
