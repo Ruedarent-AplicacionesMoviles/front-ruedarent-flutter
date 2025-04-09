@@ -31,15 +31,22 @@ class _FilteredVehiclesPageState extends State<FilteredVehiclesPage> {
 
   // Método para cargar los vehículos filtrados desde SQLite
   Future<void> _loadFilteredVehicles() async {
-    final vehicles = await _vehicleRepository.searchVehicles(
-      location: widget.location,
-      minPrice: widget.priceRange.start,
-      maxPrice: widget.priceRange.end,
-      availability: widget.availability,
-    );
-    setState(() {
-      _filteredVehicles = vehicles;
-    });
+    try {
+      final vehicles = await _vehicleRepository.searchVehicles(
+        location: widget.location,
+        minPrice: widget.priceRange.start,
+        maxPrice: widget.priceRange.end,
+        availability: widget.availability,
+      );
+      setState(() {
+        _filteredVehicles = vehicles;
+      });
+    } catch (e) {
+      print('Error al cargar vehículos filtrados: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al cargar vehículos')),
+      );
+    }
   }
 
   @override

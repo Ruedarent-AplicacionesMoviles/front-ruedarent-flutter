@@ -1,79 +1,122 @@
-import 'package:sqflite/sqflite.dart';
-import '../database/database_helper.dart';
+import 'dart:convert';
+import 'package:front_ruedarent_flutter/src/data/api_constants.dart';
+import 'package:http/http.dart' as http;
+
 import '../models/vehicle_model.dart';
-import '../repositories/vehicle_type_repository.dart'; // Importa el repositorio de tipos de vehículos
 
 class VehicleRepository {
-  final DatabaseHelper _databaseHelper = DatabaseHelper();
+  final String _baseUrl = ApiConstants.host;
+  final String _path = '/vehicles.php';
 
   // Insertar un nuevo vehículo
-  Future<int> insertVehicle(VehicleModel vehicle) async {
-    final db = await _databaseHelper.database;
-    return await db.insert(
-      'Vehicle',
-      vehicle.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+  Future<bool> insertVehicle(VehicleModel vehicle) async {
+    final uri = Uri.http(_baseUrl, _path);
+
+    final response = await http.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(vehicle.toMap()),
     );
+
+    if (response.statusCode == 201) {
+      return true;
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception('Error al registrar vehículo: ${error['error']}');
+    }
   }
 
   // Obtener un vehículo por ID
   Future<VehicleModel?> getVehicleById(int id) async {
-    final db = await _databaseHelper.database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'Vehicle',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    final uri = Uri.http(_baseUrl, _path, {'id': id.toString()});
 
-    if (maps.isNotEmpty) {
-      return VehicleModel.fromMap(maps.first);
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      if (data is List && data.isNotEmpty) {
+        return VehicleModel.fromMap(data.first);
+      } else if (data is Map && data.containsKey('vehiculo')) {
+        return VehicleModel.fromMap(data['vehiculo']);
+      } else {
+        return null;
+      }
+    } else {
+      throw Exception('Error al obtener vehículo: ${response.body}');
     }
-    return null;
   }
 
   // Obtener todos los vehículos
   Future<List<VehicleModel>> getAllVehicles() async {
-    final db = await _databaseHelper.database;
-    final List<Map<String, dynamic>> maps = await db.query('Vehicle');
+    final uri = Uri.http(_baseUrl, _path);
 
-    return List.generate(maps.length, (i) {
-      return VehicleModel.fromMap(maps[i]);
-    });
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      if (data is List) {
+        return data.map((v) => VehicleModel.fromMap(v)).toList();
+      } else if (data['vehiculos'] != null) {
+        return List<VehicleModel>.from(data['vehiculos'].map((v) => VehicleModel.fromMap(v)));
+      } else {
+        throw Exception('Respuesta inesperada del servidor');
+      }
+    } else {
+      throw Exception('Error al obtener vehículos: ${response.statusCode}');
+    }
   }
 
   // Actualizar un vehículo
-  Future<int> updateVehicle(VehicleModel vehicle) async {
-    final db = await _databaseHelper.database;
-    return await db.update(
-      'Vehicle',
-      vehicle.toMap(),
-      where: 'id = ?',
-      whereArgs: [vehicle.id],
+  Future<bool> updateVehicle(VehicleModel vehicle) async {
+    final uri = Uri.http(_baseUrl, _path);
+
+    final response = await http.put(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(vehicle.toMap()),
     );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception('Error al actualizar vehículo: ${response.body}');
+    }
   }
 
   // Eliminar un vehículo
-  Future<int> deleteVehicle(int id) async {
-    final db = await _databaseHelper.database;
-    return await db.delete(
-      'Vehicle',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+  Future<bool> deleteVehicle(int id, int ownerId) async {
+    final uri = Uri.http(_baseUrl, _path, {
+      'id': id.toString(),
+      'ownerId': ownerId.toString(),
+    });
+
+    final response = await http.delete(uri);
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception('Error al eliminar vehículo: ${response.body}');
+    }
   }
 
   // Obtener vehículos por propietario
   Future<List<VehicleModel>> getVehiclesByOwner(int ownerId) async {
-    final db = await _databaseHelper.database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'Vehicle',
-      where: 'ownerId = ?',
-      whereArgs: [ownerId],
-    );
+    final uri = Uri.http(_baseUrl, _path, {'ownerId': ownerId.toString()});
 
-    return List.generate(maps.length, (i) {
-      return VehicleModel.fromMap(maps[i]);
-    });
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      final jsonBody = jsonDecode(response.body);
+      final List<dynamic> vehiclesJson = jsonBody['vehiculos'];
+
+      return vehiclesJson.map((json) => VehicleModel.fromMap(json)).toList();
+    } else {
+      throw Exception('Error al obtener vehículos del propietario: ${response.body}');
+    }
   }
 
   // Buscar y filtrar vehículos
@@ -84,89 +127,68 @@ class VehicleRepository {
     double? maxPrice,
     String? availability,
   }) async {
-    final db = await _databaseHelper.database;
-    String whereClause = '';
-    List<dynamic> whereArgs = [];
+    final Map<String, String> queryParams = {};
 
-    if (type != null) {
-      int vehicleTypeId = await _getVehicleTypeIdByName(type); // Llama al método
-      if (vehicleTypeId != -1) { // Solo agrega la cláusula si se encontró el ID
-        whereClause += 'vehicleTypeId = ? AND ';
-        whereArgs.add(vehicleTypeId);
-      }
-    }
-    if (location != null) {
-      whereClause += 'location LIKE ? AND ';
-      whereArgs.add('%$location%');
-    }
-    if (minPrice != null) {
-      whereClause += 'price >= ? AND ';
-      whereArgs.add(minPrice);
-    }
-    if (maxPrice != null) {
-      whereClause += 'price <= ? AND ';
-      whereArgs.add(maxPrice);
-    }
-    if (availability != null) {
-      whereClause += 'availability = ? AND ';
-      whereArgs.add(availability);
-    }
+    if (type != null && type.isNotEmpty) queryParams['type'] = type;
+    if (location != null && location.isNotEmpty) queryParams['location'] = location;
+    if (minPrice != null) queryParams['minPrice'] = minPrice.toString();
+    if (maxPrice != null) queryParams['maxPrice'] = maxPrice.toString();
+    if (availability != null && availability.isNotEmpty) queryParams['availability'] = availability;
 
-    // Eliminar el último ' AND ' si existe
-    if (whereClause.endsWith(' AND ')) {
-      whereClause = whereClause.substring(0, whereClause.length - 5);
-    }
+    final uri = Uri.http(_baseUrl, _path, queryParams);
+    final response = await http.get(uri);
 
-    final List<Map<String, dynamic>> maps = await db.query(
-      'Vehicle',
-      where: whereClause.isNotEmpty ? whereClause : null,
-      whereArgs: whereArgs.isNotEmpty ? whereArgs : null,
-    );
-
-    return List.generate(maps.length, (i) {
-      return VehicleModel.fromMap(maps[i]);
-    });
-  }
-
-  // Método adicional para obtener el ID del tipo de vehículo por nombre
-  Future<int> _getVehicleTypeIdByName(String name) async {
-    final vehicleTypeRepository = VehicleTypeRepository();
-    final vehicleType = await vehicleTypeRepository.getVehicleTypeByName(name);
-    return vehicleType?.id ?? -1; // Retorna -1 si no se encuentra
-  }
-
-  Future<int> updateVehicleAvailability(int vehicleId) async {
-    final db = await _databaseHelper.database;
-
-    // Consulta la disponibilidad actual del vehículo
-    final List<Map<String, dynamic>> currentAvailability = await db.query(
-      'Vehicle',
-      columns: ['availability'],
-      where: 'id = ?',
-      whereArgs: [vehicleId],
-    );
-
-    // Verifica si se encontró el vehículo
-    if (currentAvailability.isNotEmpty) {
-      String currentAvailabilityStatus = currentAvailability.first['availability'];
-
-      // Define el nuevo estado basado en el estado actual
-      String newAvailabilityStatus = (currentAvailabilityStatus == 'available')
-          ? 'not available'
-          : 'available';
-
-      // Actualiza la disponibilidad del vehículo
-      return await db.update(
-        'Vehicle',
-        {'availability': newAvailabilityStatus},
-        where: 'id = ?',
-        whereArgs: [vehicleId],
-      );
+    if (response.statusCode == 200) {
+      final jsonBody = jsonDecode(response.body);
+      final List<dynamic> vehiclesJson = jsonBody['vehiculos'];
+      return vehiclesJson.map((v) => VehicleModel.fromMap(v)).toList();
     } else {
-      throw Exception('Vehicle not found');
+      throw Exception('Error al filtrar vehículos: ${response.body}');
     }
   }
 
+  // Actualizar disponibilidad (alternar entre available <-> not available)
+  Future<void> updateVehicleAvailability(int vehicleId) async {
+    final getUri = Uri.http(_baseUrl, _path, {'id': vehicleId.toString()});
+    final getResponse = await http.get(getUri);
 
+    if (getResponse.statusCode != 200) {
+      throw Exception('Error al obtener el vehículo con ID $vehicleId');
+    }
 
+    final vehicleData = jsonDecode(getResponse.body);
+
+    if (vehicleData is! List || vehicleData.isEmpty) {
+      throw Exception('Vehículo no encontrado');
+    }
+
+    final vehicle = VehicleModel.fromMap(vehicleData[0]);
+
+    final newAvailability = (vehicle.availability == 'available') ? 'not available' : 'available';
+
+    final updatedVehicle = VehicleModel(
+      id: vehicle.id,
+      ownerId: vehicle.ownerId,
+      vehicleTypeId: vehicle.vehicleTypeId,
+      brand: vehicle.brand,
+      model: vehicle.model,
+      location: vehicle.location,
+      availability: newAvailability,
+      price: vehicle.price,
+      photos: vehicle.photos,
+      description: vehicle.description,
+    );
+
+    final putUri = Uri.http(_baseUrl, _path);
+
+    final putResponse = await http.put(
+      putUri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(updatedVehicle.toMap()),
+    );
+
+    if (putResponse.statusCode != 200) {
+      throw Exception('Error al actualizar disponibilidad del vehículo');
+    }
+  }
 }

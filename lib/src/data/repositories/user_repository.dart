@@ -1,80 +1,95 @@
-// src/data/repositories/user_repository.dart
-
-import 'package:sqflite/sqflite.dart';
-import '../database/database_helper.dart';
+import 'dart:convert';
+import 'package:front_ruedarent_flutter/src/data/api_constants.dart';
+import 'package:http/http.dart' as http;
 import '../models/user_model.dart';
 
 class UserRepository {
-  final DatabaseHelper _databaseHelper = DatabaseHelper();
+  final String _host = ApiConstants.host;
+  final String _usersPath = '/users.php';
+  final String _loginPath = '/login.php';
 
-  // Insertar un nuevo usuario
-  Future<int> insertUser(UserModel user) async {
-    final db = await _databaseHelper.database;
-    return await db.insert(
-      'User',
-      user.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-  }
+  // Insertar un nuevo usuario (registro)
+  Future<void> insertUser(UserModel user) async {
+    final uri = Uri.parse('$_host$_usersPath');
 
-  // Obtener un usuario por ID
-  Future<UserModel?> getUserById(int id) async {
-    final db = await _databaseHelper.database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'User',
-      where: 'id = ?',
-      whereArgs: [id],
+    final response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(user.toMap()),
     );
 
-    if (maps.isNotEmpty) {
-      return UserModel.fromMap(maps.first);
+    if (response.statusCode != 201) {
+      print('Respuesta del backend: ${response.body}');
+      throw Exception('Error al registrar usuario');
     }
-    return null;
   }
 
-  // Obtener un usuario por email
+  // Obtener un usuario por email (para verificar si ya existe)
   Future<UserModel?> getUserByEmail(String email) async {
-    final db = await _databaseHelper.database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'User',
-      where: 'email = ?',
-      whereArgs: [email],
-    );
+    final uri = Uri.parse('$_host$_usersPath?email=$email');
 
-    if (maps.isNotEmpty) {
-      return UserModel.fromMap(maps.first);
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is List && data.isNotEmpty) {
+        return UserModel.fromMap(data.first);
+      }
+      return null;
+    } else {
+      throw Exception('Error al buscar usuario: ${response.body}');
     }
-    return null;
   }
 
-  // Actualizar un usuario
-  Future<int> updateUser(UserModel user) async {
-    final db = await _databaseHelper.database;
-    return await db.update(
-      'User',
-      user.toMap(),
-      where: 'id = ?',
-      whereArgs: [user.id],
+  // Método para iniciar sesión (login)
+  Future<UserModel> loginUser(String email, String password) async {
+    final uri = Uri.parse('$_host$_loginPath');
+
+    final response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email, 'password': password}),
     );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return UserModel.fromMap(data['user']);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Error al iniciar sesión');
+    }
   }
 
-  // Eliminar un usuario
-  Future<int> deleteUser(int id) async {
-    final db = await _databaseHelper.database;
-    return await db.delete(
-      'User',
-      where: 'id = ?',
-      whereArgs: [id],
+  // Obtener usuario por ID
+  Future<UserModel?> getUserById(int id) async {
+    final uri = Uri.parse('$_host$_usersPath?id=$id');
+
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is List && data.isNotEmpty) {
+        return UserModel.fromMap(data.first);
+      }
+      return null;
+    } else {
+      throw Exception('Error al obtener usuario por ID: ${response.body}');
+    }
+  }
+
+  // Actualizar usuario
+  Future<void> updateUser(UserModel user) async {
+    final uri = Uri.parse('$_host$_usersPath');
+
+    final response = await http.put(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(user.toMap()),
     );
-  }
 
-  // Obtener todos los usuarios (opcional)
-  Future<List<UserModel>> getAllUsers() async {
-    final db = await _databaseHelper.database;
-    final List<Map<String, dynamic>> maps = await db.query('User');
-
-    return List.generate(maps.length, (i) {
-      return UserModel.fromMap(maps[i]);
-    });
+    if (response.statusCode != 200) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Error al actualizar usuario');
+    }
   }
 }

@@ -3,19 +3,31 @@ import '../../../data/models/user_model.dart';
 
 class RolesPage extends StatelessWidget {
   final UserModel user;
+  final VoidCallback onLogout;
 
-  const RolesPage({super.key, required this.user});
+  const RolesPage({
+    super.key,
+    required this.user,
+    required this.onLogout,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final UserModel user = ModalRoute.of(context)!.settings.arguments as UserModel;
     final int? userId = user.id;
-
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Selecciona un rol'),
         backgroundColor: Colors.green,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Cerrar sesión',
+            onPressed: () {
+              onLogout(); // Llama a handleLogout desde main.dart
+            },
+          )
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -44,8 +56,11 @@ class RolesPage extends StatelessWidget {
                 imagePath: 'assets/images/roles/rentador.jpg',
                 label: 'Rentador',
                 onTap: () {
-                  Navigator.pushNamed(context, '/vehicles-renter',
-                  arguments: userId);
+                  Navigator.pushNamed(
+                    context,
+                    '/vehicles-renter',
+                    arguments: userId,
+                  );
                   print("Rentador seleccionado");
                 },
               ),
@@ -56,7 +71,12 @@ class RolesPage extends StatelessWidget {
     );
   }
 
-  Widget _buildRoleOption(BuildContext context, {required String imagePath, required String label, required VoidCallback onTap}) {
+  Widget _buildRoleOption(
+      BuildContext context, {
+        required String imagePath,
+        required String label,
+        required VoidCallback onTap,
+      }) {
     return Column(
       children: [
         GestureDetector(

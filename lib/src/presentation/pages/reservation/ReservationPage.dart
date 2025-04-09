@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 
 import '../../../data/UserProvider.dart';
 import '../../../data/models/reservation_model.dart';
 import '../../../data/repositories/reservation_repository.dart';
+import '../../../data/repositories/vehicle_repository.dart';
+import '../../../data/models/vehicle_model.dart';
 
 class ReservationPage extends StatefulWidget {
   @override
@@ -19,7 +22,8 @@ class _ReservationPageState extends State<ReservationPage> {
   void initState() {
     super.initState();
     _userProvider = context.read<UserProvider>();
-    _reservationsFuture = _reservationRepository.getReservationsByUserId(_userProvider.userId);
+    _reservationsFuture =
+        _reservationRepository.getReservationsByUserId(_userProvider.userId!);
   }
 
   @override
@@ -33,11 +37,11 @@ class _ReservationPageState extends State<ReservationPage> {
         future: _reservationsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('No hay reservas para mostrar.'));
+            return const Center(child: Text('No hay reservas para mostrar.'));
           } else {
             final reservations = snapshot.data!;
             return ListView.builder(
@@ -45,49 +49,69 @@ class _ReservationPageState extends State<ReservationPage> {
               itemCount: reservations.length,
               itemBuilder: (context, index) {
                 final reservation = reservations[index];
-                return Dismissible(
-                  key: Key(reservation.id.toString()), // Utiliza el ID de la reserva como clave
-                  background: Container(
-                    color: Colors.red,
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: 20.0),
-                    child: Icon(Icons.delete, color: Colors.white),
-                  ),
-                  onDismissed: (direction) {
-                    // Elimina la reserva
-                    _deleteReservation(reservation.id!); // Usa el operador de afirmación aquí
-                    // Muestra un snackbar de confirmación
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Reserva eliminada: ${reservation.id}')),
-                    );
-                  },
-                  child: Card(
-                    elevation: 4,
-                    margin: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                return FutureBuilder<VehicleModel?>(
+                  future: _fetchVehicleById(reservation.vehicleId),
+                  builder: (context, vehicleSnapshot) {
+                    if (!vehicleSnapshot.hasData) {
+                      return const SizedBox(
+                          height: 100,
+                          child: Center(child: CircularProgressIndicator()));
+                    }
+
+                    final vehicle = vehicleSnapshot.data!;
+                    return Dismissible(
+                      key: Key(reservation.id.toString()),
+                      background: Container(
+                        color: Colors.red,
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 20.0),
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
+                      onDismissed: (direction) {
+                        _deleteReservation(reservation.id!);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text('Reserva eliminada: ${reservation.id}')),
+                        );
+                      },
+                      child: Card(
+                        elevation: 4,
+                        margin: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(Icons.calendar_today, color: Colors.blue),
-                              SizedBox(width: 8),
-                              Text('Reserva ID: ${reservation.id}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                              Row(
+                                children: [
+                                  const Icon(Icons.calendar_today, color: Colors.blue),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Reserva ID: ${reservation.id}',
+                                    style: const TextStyle(
+                                        fontSize: 18, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              vehicle.photos != null
+                                  ? Image.network(vehicle.photos!,
+                                  height: 100, fit: BoxFit.cover)
+                                  : const Icon(Icons.directions_car,
+                                  size: 100, color: Colors.grey),
+                              const SizedBox(height: 10),
+                              Text('Vehículo: ${vehicle.brand} ${vehicle.model}',
+                                  style: const TextStyle(fontSize: 16)),
+                              Text('Precio: S/. ${vehicle.price.toStringAsFixed(2)}'),
+                              Text('Estado: ${reservation.reservationStatus}'),
+                              Text('Desde: ${formatDate(reservation.startDate)}'),
+                              Text('Hasta: ${formatDate(reservation.endDate)}'),
                             ],
                           ),
-                          SizedBox(height: 10),
-                          Text('Vehículo ID: ${reservation.vehicleId}', style: TextStyle(fontSize: 16)),
-                          SizedBox(height: 5),
-                          Text('Estado: ${reservation.reservationStatus}', style: TextStyle(fontSize: 16)),
-                          SizedBox(height: 5),
-                          Text('Desde: ${formatDate(reservation.startDate)}', style: TextStyle(fontSize: 16)),
-                          SizedBox(height: 5),
-                          Text('Hasta: ${formatDate(reservation.endDate)}', style: TextStyle(fontSize: 16)),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 );
               },
             );
@@ -98,13 +122,23 @@ class _ReservationPageState extends State<ReservationPage> {
   }
 
   String formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+    return DateFormat('dd/MM/yyyy').format(date);
   }
 
   Future<void> _deleteReservation(int id) async {
     await _reservationRepository.deleteReservation(id);
     setState(() {
-      _reservationsFuture = _reservationRepository.getReservationsByUserId(_userProvider.userId);
+      _reservationsFuture =
+          _reservationRepository.getReservationsByUserId(_userProvider.userId!);
     });
+  }
+
+  Future<VehicleModel?> _fetchVehicleById(int vehicleId) async {
+    try {
+      return await VehicleRepository().getVehicleById(vehicleId);
+    } catch (e) {
+      print('Error al obtener el vehículo: $e');
+      return null;
+    }
   }
 }

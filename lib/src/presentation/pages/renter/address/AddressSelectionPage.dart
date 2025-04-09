@@ -1,33 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:front_ruedarent_flutter/src/data/models/address_model.dart';
+import 'package:front_ruedarent_flutter/src/data/models/vehicle_model.dart';
 import 'package:front_ruedarent_flutter/src/data/repositories/address_repository.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/renter/address/AddNewAddressPage.dart';
-import 'package:front_ruedarent_flutter/src/presentation/pages/renter/payment/PaymentPage.dart'; // Asegúrate de tener esta página
 
 class AddressSelectionPage extends StatefulWidget {
-  final int userId; // Recibe el userId del usuario
+  final int userId;
+  final VehicleModel vehicle;
 
-  const AddressSelectionPage({Key? key, required this.userId}) : super(key: key);
+  const AddressSelectionPage({
+    Key? key,
+    required this.userId,
+    required this.vehicle,
+  }) : super(key: key);
 
   @override
   _AddressSelectionPageState createState() => _AddressSelectionPageState();
 }
 
 class _AddressSelectionPageState extends State<AddressSelectionPage> {
-  List<AddressModel> addresses = []; // Lista de direcciones para el usuario
-  int? _selectedAddressIndex; // Índice de la dirección seleccionada
+  List<AddressModel> addresses = [];
+  int? _selectedAddressIndex;
 
   @override
   void initState() {
     super.initState();
-    _loadAddresses(); // Cargar las direcciones desde la base de datos
+    _loadAddresses();
   }
 
-  // Método para cargar las direcciones desde la base de datos
   void _loadAddresses() async {
     List<AddressModel> data = await AddressRepository().getAllAddresses(widget.userId);
     setState(() {
-      addresses = data; // Actualizar el estado con las direcciones cargadas
+      addresses = data;
     });
   }
 
@@ -66,7 +70,7 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
                       ),
                       onTap: () {
                         setState(() {
-                          _selectedAddressIndex = index; // Seleccionar la dirección
+                          _selectedAddressIndex = index;
                         });
                       },
                     ),
@@ -81,18 +85,12 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
               ),
             ),
             const SizedBox(height: 20),
-            // Botón "Confirmar Orden" si se ha seleccionado una dirección
             if (_selectedAddressIndex != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 16.0),
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PaymentPage(address: addresses[_selectedAddressIndex!]),
-                      ),
-                    );
+                    Navigator.pop(context, addresses[_selectedAddressIndex!]);
                   },
                   icon: const Icon(Icons.payment),
                   label: const Text('Confirmar Orden'),
@@ -102,19 +100,19 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
                   ),
                 ),
               ),
-            const SizedBox(height: 10), // Separador entre botones
+            const SizedBox(height: 10),
             ElevatedButton.icon(
               onPressed: () async {
                 final newAddress = await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => AddNewAddressPage(userId: widget.userId), // Navegar a la pantalla de agregar dirección
+                    builder: (context) => AddNewAddressPage(userId: widget.userId),
                   ),
                 );
 
                 if (newAddress != null) {
                   setState(() {
-                    addresses.add(newAddress); // Agregar la nueva dirección y actualizar la UI
+                    addresses.add(newAddress);
                   });
                 }
               },
@@ -125,14 +123,13 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
               ),
             ),
-            const SizedBox(height: 20), // Separador adicional
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
 
-  // Método para mostrar una alerta de confirmación antes de eliminar
   void _showDeleteConfirmationDialog(AddressModel address, int index) {
     showDialog(
       context: context,
@@ -142,18 +139,16 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
           content: const Text('¿Estás seguro de que deseas eliminar esta dirección?'),
           actions: <Widget>[
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Cerrar el diálogo sin hacer nada
-              },
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text('Cancelar'),
             ),
             TextButton(
               onPressed: () async {
-                await AddressRepository().deleteAddress(address.id!); // Eliminar de la base de datos
+                await AddressRepository().deleteAddressById(address.id!);
                 setState(() {
-                  addresses.removeAt(index); // Actualizar la lista en la UI
+                  addresses.removeAt(index);
                 });
-                Navigator.of(context).pop(); // Cerrar el cuadro de diálogo
+                Navigator.of(context).pop();
               },
               child: const Text('Eliminar'),
             ),

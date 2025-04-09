@@ -15,30 +15,34 @@ class CategoryVehiclesForRenterPage extends StatefulWidget {
 
 class _CategoryVehiclesForRenterPageState extends State<CategoryVehiclesForRenterPage> {
   List<VehicleModel> vehicles = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadVehicles(); // Cargar vehículos al iniciar la pantalla
+    _loadVehicles();
   }
 
-  // Método para cargar vehículos de la categoría
   Future<void> _loadVehicles() async {
-    int vehicleTypeId = await _getVehicleTypeIdByName(widget.categoryName);
-    if (vehicleTypeId != -1) {
-      final data = await VehicleRepository().getAllVehicles();
-      setState(() {
-        // Filtrar los vehículos según el tipo
-        vehicles = data.where((vehicle) => vehicle.vehicleTypeId == vehicleTypeId).toList();
-      });
+    try {
+      int vehicleTypeId = await _getVehicleTypeIdByName(widget.categoryName);
+      if (vehicleTypeId != -1) {
+        final data = await VehicleRepository().getAllVehicles();
+        setState(() {
+          vehicles = data.where((v) => v.vehicleTypeId == vehicleTypeId).toList();
+        });
+      }
+    } catch (e) {
+      print('Error al cargar vehículos por categoría: $e');
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
-  // Método para obtener el ID del tipo de vehículo por nombre
   Future<int> _getVehicleTypeIdByName(String name) async {
-    final vehicleTypeRepository = VehicleTypeRepository();
-    final vehicleType = await vehicleTypeRepository.getVehicleTypeByName(name);
-    return vehicleType?.id ?? -1; // Retorna -1 si no se encuentra
+    final repo = VehicleTypeRepository();
+    final type = await repo.getVehicleTypeByName(name);
+    return type?.id ?? -1;
   }
 
   @override
@@ -46,26 +50,27 @@ class _CategoryVehiclesForRenterPageState extends State<CategoryVehiclesForRente
     return Scaffold(
       appBar: AppBar(
         title: Text('Vehículos en ${widget.categoryName}'),
+        backgroundColor: Colors.green,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: vehicles.isNotEmpty
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : vehicles.isNotEmpty
             ? ListView.builder(
           itemCount: vehicles.length,
           itemBuilder: (context, index) {
+            final vehicle = vehicles[index];
             return InkWell(
               onTap: () {
-                // Al hacer clic, navega a la página de detalles del vehículo
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => VehicleDetailPage(vehicle: vehicles[index]),
+                    builder: (_) => VehicleDetailPage(vehicle: vehicle),
                   ),
                 );
               },
@@ -75,7 +80,6 @@ class _CategoryVehiclesForRenterPageState extends State<CategoryVehiclesForRente
                   padding: const EdgeInsets.all(12.0),
                   child: Row(
                     children: [
-                      // Imagen del vehículo (URL o asset local si no tiene foto)
                       Container(
                         height: 100,
                         width: 100,
@@ -83,37 +87,27 @@ class _CategoryVehiclesForRenterPageState extends State<CategoryVehiclesForRente
                           borderRadius: BorderRadius.circular(8),
                           color: Colors.grey[200],
                         ),
-                        child: vehicles[index].photos != null && vehicles[index].photos!.isNotEmpty
-                            ? Image.network(vehicles[index].photos!, fit: BoxFit.cover)
+                        child: vehicle.photos != null && vehicle.photos!.isNotEmpty
+                            ? Image.network(vehicle.photos!, fit: BoxFit.cover)
                             : const Icon(Icons.directions_car, size: 50, color: Colors.grey),
                       ),
                       const SizedBox(width: 16),
-                      // Información del vehículo
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              vehicles[index].brand,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              vehicle.brand,
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                             ),
-                            Text(
-                              vehicles[index].model,
-                              style: const TextStyle(fontSize: 16),
-                            ),
+                            Text(vehicle.model, style: const TextStyle(fontSize: 16)),
                             const SizedBox(height: 8),
                             Text(
-                              'S/. ${vehicles[index].price.toStringAsFixed(2)}',
+                              'S/. ${vehicle.price.toStringAsFixed(2)}',
                               style: const TextStyle(fontSize: 16, color: Colors.green),
                             ),
                             const SizedBox(height: 8),
-                            Text(
-                              vehicles[index].location,
-                              style: const TextStyle(color: Colors.grey),
-                            ),
+                            Text(vehicle.location, style: const TextStyle(color: Colors.grey)),
                           ],
                         ),
                       ),
@@ -124,9 +118,7 @@ class _CategoryVehiclesForRenterPageState extends State<CategoryVehiclesForRente
             );
           },
         )
-            : Center(
-          child: const Text('No hay vehículos disponibles en esta categoría.'),
-        ),
+            : const Center(child: Text('No hay vehículos disponibles en esta categoría.')),
       ),
     );
   }

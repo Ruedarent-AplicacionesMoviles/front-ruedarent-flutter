@@ -18,7 +18,6 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
   final TextEditingController _photosController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
-  // Lista de ubicaciones en Lima Metropolitana
   final List<String> _ubicaciones = [
     'Cercado de Lima, Peru', 'Miraflores, Peru', 'San Isidro, Peru', 'San Borja, Peru',
     'Surco, Peru', 'San Miguel, Peru', 'La Molina, Peru', 'Magdalena, Peru',
@@ -35,6 +34,7 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Agregar Vehículo'),
+        backgroundColor: Colors.green,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -86,39 +86,7 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
               ),
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: () async {
-                  // Validar que los campos no estén vacíos
-                  if (_brandController.text.isEmpty ||
-                      _modelController.text.isEmpty ||
-                      _selectedUbicacion == null ||
-                      _priceController.text.isEmpty) {
-                    _showErrorDialog(context, 'Todos los campos son obligatorios');
-                    return;
-                  }
-
-                  // Crear una instancia de VehicleModel
-                  final newVehicle = VehicleModel(
-                    ownerId: 1, // Asignar el ID del propietario según sea necesario
-                    vehicleTypeId: widget.vehicleTypeId,
-                    brand: _brandController.text,
-                    model: _modelController.text,
-                    location: _selectedUbicacion!,
-                    availability: 'available', // Valor predeterminado
-                    price: double.parse(_priceController.text),
-                    photos: _photosController.text.isEmpty ? null : _photosController.text,
-                    description: _descriptionController.text.isEmpty ? null : _descriptionController.text,
-                  );
-
-                  try {
-                    // Insertar el nuevo vehículo utilizando el repositorio
-                    await VehicleRepository().insertVehicle(newVehicle);
-                    // Volver a la pantalla anterior y actualizar la lista
-                    Navigator.pop(context, true);
-                  } catch (e) {
-                    print('Error al guardar el vehículo: $e');
-                    _showErrorDialog(context, 'Hubo un error al guardar el vehículo');
-                  }
-                },
+                onPressed: _saveVehicle,
                 child: const Text('Guardar'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
@@ -133,7 +101,42 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
     );
   }
 
-  // Método para mostrar un cuadro de diálogo con un mensaje de error
+  Future<void> _saveVehicle() async {
+    // Validación básica
+    if (_brandController.text.isEmpty ||
+        _modelController.text.isEmpty ||
+        _selectedUbicacion == null ||
+        _priceController.text.isEmpty) {
+      _showErrorDialog(context, 'Todos los campos obligatorios deben estar llenos');
+      return;
+    }
+
+    try {
+      final newVehicle = VehicleModel(
+        ownerId: 1, // Cambia esto cuando tengas login real
+        vehicleTypeId: widget.vehicleTypeId,
+        brand: _brandController.text,
+        model: _modelController.text,
+        location: _selectedUbicacion!,
+        availability: 'available',
+        price: double.parse(_priceController.text),
+        photos: _photosController.text.isEmpty ? null : _photosController.text,
+        description: _descriptionController.text.isEmpty ? null : _descriptionController.text,
+      );
+
+      await VehicleRepository().insertVehicle(newVehicle);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vehículo guardado exitosamente')),
+      );
+
+      Navigator.pop(context, true); // Volver y actualizar la lista
+    } catch (e) {
+      print('Error: $e');
+      _showErrorDialog(context, 'Error al guardar el vehículo');
+    }
+  }
+
   void _showErrorDialog(BuildContext context, String message) {
     showDialog(
       context: context,

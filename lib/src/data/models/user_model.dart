@@ -12,12 +12,12 @@ class UserModel {
     this.id,
     required this.name,
     required this.email,
-    required this.password,
+    this.password = '', // Hacer que sea opcional si no se devuelve
     required this.userType,
     required this.notificationPreferences,
   });
 
-  // Convert a UserModel into a Map. The keys must correspond to the names of the columns in the database.
+  // Convertir un UserModel a Map
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -29,15 +29,15 @@ class UserModel {
     };
   }
 
-  // Extract a UserModel object from a Map.
+  // Convertir Map a UserModel
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
       id: map['id'],
       name: map['name'],
       email: map['email'],
-      password: map['password'],
+      password: map['password'] ?? '', // En login puede no venir
       userType: map['userType'],
-      notificationPreferences: map['notificationPreferences'],
+      notificationPreferences: map['notificationPreferences'] ?? 'all',
     );
   }
 }

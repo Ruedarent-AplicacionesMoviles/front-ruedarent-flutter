@@ -3,9 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:front_ruedarent_flutter/src/data/models/address_model.dart';
 import 'package:front_ruedarent_flutter/src/data/models/vehicle_model.dart';
 import 'package:front_ruedarent_flutter/src/data/repositories/reservation_repository.dart';
-import 'package:front_ruedarent_flutter/src/data/repositories/vehicle_repository.dart'; // Añadir esta importación
+import 'package:front_ruedarent_flutter/src/data/repositories/vehicle_repository.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/renter/RentadorVehiclesPage.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/renter/address/AddressSelectionPage.dart';
+import 'package:front_ruedarent_flutter/src/presentation/pages/renter/payment/PaymentPage.dart';
+
+import 'package:front_ruedarent_flutter/src/data/models/notification_model.dart';
+import 'package:front_ruedarent_flutter/src/data/repositories/notification_repository.dart';
 
 import '../../../../data/UserProvider.dart';
 import '../../../../data/models/reservation_model.dart';
@@ -22,66 +26,56 @@ class ConfirmOrderPage extends StatefulWidget {
 class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
   AddressModel? selectedAddress;
   bool isVehicleDeleted = false;
-  final VehicleRepository _vehicleRepository = VehicleRepository();// Añadir esta línea
+  final VehicleRepository _vehicleRepository = VehicleRepository();
   final ReservationRepository _reservationRepository = ReservationRepository();
+  final NotificationRepository _notificationRepository = NotificationRepository();
   late final UserProvider _userProvider;
-
-
-
 
   @override
   void initState() {
     super.initState();
-    // Imprimir detalles del vehículo al iniciar
-    print('Iniciando ConfirmOrderPage');
-    print('ID del vehículo: ${widget.vehicle.id}');
-    print('Marca: ${widget.vehicle.brand}');
-    print('Modelo: ${widget.vehicle.model}');
     _userProvider = context.read<UserProvider>();
   }
 
   Future<void> _createReservation(int userId) async {
     try {
-      // Crear la reserva con los datos relevantes
-      // Imprimir los valores que se usarán para crear la reserva
-      print('Creando reserva con los siguientes valores:');
-      print('Renter ID: $userId');
-      print('Vehicle ID: ${widget.vehicle.id}');
-      print('Start Date: ${DateTime.now()}');
-      print('End Date: ${DateTime.now().add(const Duration(days: 7))}');
-      print('Pickup Location: a');
-      print('Dropoff Location: b');
-      print('Reservation Status: pending');
-      print('Total Price: ${widget.vehicle.price}');
-      print('Payment Method: cash');
       ReservationModel reservation = ReservationModel(
         renterId: userId,
         vehicleId: widget.vehicle.id!,
         startDate: DateTime.now(),
-        endDate: DateTime.now().add(const Duration(days: 7)), // Ejemplo, debes obtener las fechas de la interfaz
+        endDate: DateTime.now().add(const Duration(days: 7)),
         pickupLocation: 'a',
         dropoffLocation: 'b',
         reservationStatus: 'confirmed',
         totalPrice: widget.vehicle.price,
-        paymentMethod: 'cash', // Ejemplo, debes obtener el método de pago de la interfaz
+        paymentMethod: 'cash',
       );
 
-      // Guardar la reserva en la base de datos o enviar a un servicio
-      await _reservationRepository.insertReservation(reservation);
+      await _reservationRepository.createReservation(reservation);
+      await _createNotification(widget.vehicle.ownerId, widget.vehicle.id!);
     } catch (e) {
-      // Manejar el error de creación de la reserva
       print('Error al crear la reserva: $e');
     }
   }
 
+  Future<void> _createNotification(int ownerId, int vehicleId) async {
+    final NotificationModel notification = NotificationModel(
+      userId: ownerId,
+      notificationType: 'Nueva reserva',
+      content: 'Tu vehículo con ID $vehicleId ha sido reservado.',
+      timestamp: DateTime.now(),
+      read: false,
+    );
 
-  // Método para actualizar la disponibilidad del vehículo
+    try {
+      await _notificationRepository.insertNotification(notification);
+    } catch (e) {
+      print('Error al crear notificación: $e');
+    }
+  }
+
   Future<void> _setVehicleNotAvailable() async {
-    print('Intentando actualizar disponibilidad del vehículo');
-    print('ID del vehículo a actualizar: ${widget.vehicle.id}');
-
     if (widget.vehicle.id == null) {
-      print('Error: ID del vehículo es null');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Error: ID del vehículo no disponible'),
@@ -92,10 +86,7 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
     }
 
     try {
-      print('Llamando a updateVehicleAvailability');
-      final result = await _vehicleRepository.updateVehicleAvailability(widget.vehicle.id!);
-      print('Resultado de la actualización: $result');
-
+      await _vehicleRepository.updateVehicleAvailability(widget.vehicle.id!);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -104,9 +95,7 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
           ),
         );
       }
-    } catch (e, stackTrace) {
-      print('Error al actualizar disponibilidad: $e');
-      print('Stack trace: $stackTrace');
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -119,33 +108,33 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
   }
 
   Future<void> _selectAddress() async {
-    print('Iniciando selección de dirección');
-    print('Llamando a _setVehicleNotAvailable');
-    await _setVehicleNotAvailable();
-
-    print('Actualizando estado con nueva dirección');
-
-    await _createReservation(_userProvider.userId);
-
     final AddressModel? address = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AddressSelectionPage(userId: _userProvider.userId),
+        builder: (context) => AddressSelectionPage(
+          userId: _userProvider.userId!,
+          vehicle: widget.vehicle,
+        ),
       ),
     );
 
-    print('Dirección seleccionada: ${address?.direccion}');
-
     if (address != null) {
-
-
       setState(() {
         selectedAddress = address;
       });
 
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentPage(
+            address: address,
+            vehicle: widget.vehicle,
+          ),
+        ),
+      );
     }
   }
-  // Mostrar un diálogo de confirmación antes de eliminar el vehículo
+
   Future<void> _confirmDeleteVehicle() async {
     showDialog(
       context: context,
@@ -156,16 +145,16 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Cerrar el diálogo
+                Navigator.of(context).pop();
               },
               child: const Text('Cancelar'),
             ),
             TextButton(
               onPressed: () {
                 setState(() {
-                  isVehicleDeleted = true; // Marcar el vehículo como eliminado
+                  isVehicleDeleted = true;
                 });
-                Navigator.of(context).pop(); // Cerrar el diálogo
+                Navigator.of(context).pop();
               },
               child: const Text('Eliminar'),
             ),
@@ -185,10 +174,9 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center, // Centrar el contenido horizontalmente
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(height: 40), // Espaciado en la parte superior
-            // Mostrar detalles del vehículo con botón de eliminar, solo si no ha sido eliminado
+            const SizedBox(height: 40),
             if (!isVehicleDeleted)
               Card(
                 child: ListTile(
@@ -199,7 +187,7 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
                       : const Icon(Icons.directions_car, size: 50),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: _confirmDeleteVehicle, // Mostrar advertencia antes de eliminar el vehículo
+                    onPressed: _confirmDeleteVehicle,
                   ),
                 ),
               ),
@@ -211,7 +199,6 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
                 ),
               ),
             const SizedBox(height: 16),
-            // Mostrar la dirección seleccionada o permitir seleccionar una dirección
             if (selectedAddress != null)
               Card(
                 child: ListTile(
@@ -219,13 +206,13 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
                   subtitle: Text(selectedAddress!.distrito),
                   trailing: IconButton(
                     icon: const Icon(Icons.edit),
-                    onPressed: _selectAddress, // Permitir editar la dirección seleccionada
+                    onPressed: _selectAddress,
                   ),
                 ),
               )
             else
               ElevatedButton.icon(
-                onPressed: _selectAddress, // Seleccionar dirección si aún no lo ha hecho
+                onPressed: _selectAddress,
                 icon: const Icon(Icons.location_on),
                 label: const Text('Seleccionar Dirección de Envío'),
                 style: ElevatedButton.styleFrom(
@@ -234,22 +221,20 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
                 ),
               ),
             const SizedBox(height: 20),
-            // Resumen de la orden (por ejemplo, el total a pagar), solo si el vehículo no ha sido eliminado
             if (!isVehicleDeleted) ...[
               const Text(
                 'Total a pagar:',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               Text(
-                'S/. ${widget.vehicle.price.toStringAsFixed(2)}', // Mostrar el precio del vehículo
+                'S/. ${widget.vehicle.price.toStringAsFixed(2)}',
                 style: const TextStyle(fontSize: 20, color: Colors.green),
               ),
             ],
-            const Spacer(), // Empuja el contenido de abajo hacia el centro
-            // Si el vehículo ha sido eliminado, mostrar una opción para agregar un nuevo vehículo
+            const Spacer(),
             if (isVehicleDeleted)
               Align(
-                alignment: Alignment.center, // Centrar el botón de agregar vehículo
+                alignment: Alignment.center,
                 child: Column(
                   children: [
                     const Text(
@@ -259,7 +244,6 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
                     const SizedBox(height: 10),
                     ElevatedButton.icon(
                       onPressed: () {
-                        // Redirigir a la página de categorías para seleccionar un nuevo vehículo
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
@@ -275,7 +259,7 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
                         textStyle: const TextStyle(fontSize: 18),
                       ),
                     ),
-                    const SizedBox(height: 40), // Espaciado en la parte inferior
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),

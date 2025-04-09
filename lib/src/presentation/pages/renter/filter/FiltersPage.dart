@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:front_ruedarent_flutter/src/presentation/pages/renter/filter/FilteredVehiclePage.dart';
 
 class FiltersPage extends StatefulWidget {
   final String? selectedAvailability;
@@ -22,7 +21,6 @@ class _FiltersPageState extends State<FiltersPage> {
   String? _selectedLocation;
   RangeValues _priceRange = const RangeValues(0, 150);
 
-  // Lista de distritos de Lima, Perú
   final List<String> _locations = [
     'San Isidro', 'Miraflores', 'La Molina', 'Surco', 'San Borja', 'Lince',
     'Barranco', 'San Miguel', 'Magdalena', 'Pueblo Libre', 'Jesus María',
@@ -53,10 +51,7 @@ class _FiltersPageState extends State<FiltersPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Disponibilidad',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            const Text('Disponibilidad', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             DropdownButton<String>(
               value: _selectedAvailability,
               hint: const Text('Seleccionar disponibilidad'),
@@ -66,18 +61,11 @@ class _FiltersPageState extends State<FiltersPage> {
                 });
               },
               items: <String>['available', 'not available', 'under maintenance']
-                  .map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
+                  .map((value) => DropdownMenuItem(value: value, child: Text(value)))
+                  .toList(),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Ubicación',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            const Text('Ubicación', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             DropdownButton<String>(
               value: _selectedLocation,
               hint: const Text('Seleccionar ubicación'),
@@ -86,18 +74,10 @@ class _FiltersPageState extends State<FiltersPage> {
                   _selectedLocation = newValue;
                 });
               },
-              items: _locations.map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
+              items: _locations.map((value) => DropdownMenuItem(value: value, child: Text(value))).toList(),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Rango de Precio',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            const Text('Rango de Precio', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12.0),
               decoration: BoxDecoration(
@@ -108,7 +88,7 @@ class _FiltersPageState extends State<FiltersPage> {
                     color: Colors.grey.withOpacity(0.2),
                     spreadRadius: 2,
                     blurRadius: 5,
-                    offset: Offset(0, 3),
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
@@ -116,34 +96,26 @@ class _FiltersPageState extends State<FiltersPage> {
                 children: [
                   RangeSlider(
                     activeColor: Colors.green,
-                    inactiveColor: Colors.purple.shade100,
+                    inactiveColor: Colors.green.shade100,
                     values: _priceRange,
                     min: 0,
                     max: 150,
-                    divisions: 30, // Divisiones para que sean de 5 en 5
+                    divisions: 30,
                     labels: RangeLabels(
                       _priceRange.start.round().toString(),
                       _priceRange.end.round().toString(),
                     ),
-                    onChanged: (RangeValues values) {
-                      if (values.start >= 0 && values.end <= 150) {
-                        setState(() {
-                          _priceRange = values;
-                        });
-                      }
+                    onChanged: (values) {
+                      setState(() {
+                        _priceRange = values;
+                      });
                     },
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'S/${_priceRange.start.toStringAsFixed(0)}',
-                        style: TextStyle(fontSize: 16, color: Colors.green),
-                      ),
-                      Text(
-                        'S/${_priceRange.end.toStringAsFixed(0)}',
-                        style: TextStyle(fontSize: 16, color: Colors.green),
-                      ),
+                      Text('S/${_priceRange.start.toStringAsFixed(0)}', style: const TextStyle(fontSize: 16, color: Colors.green)),
+                      Text('S/${_priceRange.end.toStringAsFixed(0)}', style: const TextStyle(fontSize: 16, color: Colors.green)),
                     ],
                   ),
                 ],
@@ -152,18 +124,16 @@ class _FiltersPageState extends State<FiltersPage> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // Navegar a la página de resultados con los filtros aplicados
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => FilteredVehiclesPage(
-                      availability: _selectedAvailability,
-                      location: _selectedLocation,
-                      priceRange: _priceRange,
-                    ),
-                  ),
-                );
+                Navigator.pop(context, {
+                  'availability': _selectedAvailability,
+                  'location': _selectedLocation,
+                  'priceRange': _priceRange,
+                });
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+              ),
               child: const Text('Aplicar Filtros'),
             ),
           ],

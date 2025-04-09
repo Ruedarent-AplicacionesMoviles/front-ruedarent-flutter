@@ -17,7 +17,7 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
   late String _description;
   late double _price;
   late String _location;
-  String _availability = 'Disponible'; // Valor por defecto
+  String _availability = 'Disponible';
 
   final List<String> _availabilityOptions = [
     'Disponible',
@@ -28,12 +28,11 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
   @override
   void initState() {
     super.initState();
-    // Inicializa los campos con los datos del vehículo
     _brand = widget.vehicle.brand;
     _description = widget.vehicle.description ?? '';
     _price = widget.vehicle.price;
     _location = widget.vehicle.location;
-    _availability = _convertAvailability(widget.vehicle.availability); // Convertir al valor correspondiente
+    _availability = _convertAvailability(widget.vehicle.availability);
   }
 
   String _convertAvailability(String disponibilidadDb) {
@@ -45,34 +44,68 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
       case 'under maintenance':
         return 'Bajo mantenimiento';
       default:
-        return 'Disponible'; // Valor por defecto
+        return 'Disponible';
     }
   }
 
-  // Método para guardar los cambios
+  String _convertToDbAvailability(String disponibilidadUi) {
+    switch (disponibilidadUi) {
+      case 'Disponible':
+        return 'available';
+      case 'No disponible':
+        return 'not available';
+      case 'Bajo mantenimiento':
+        return 'under maintenance';
+      default:
+        return 'available';
+    }
+  }
+
   Future<void> _saveVehicle() async {
     if (_formKey.currentState!.validate()) {
-      // Actualiza el vehículo con los nuevos datos
-      VehicleModel updatedVehicle = VehicleModel(
+      final updatedVehicle = VehicleModel(
         id: widget.vehicle.id,
         ownerId: widget.vehicle.ownerId,
         vehicleTypeId: widget.vehicle.vehicleTypeId,
         brand: _brand,
-        description: _description,
-        price: _price,
+        model: widget.vehicle.model,
         location: _location,
-        availability: _availability == 'Disponible'
-            ? 'available'
-            : (_availability == 'No disponible'
-            ? 'not available'
-            : 'under maintenance'),
+        availability: _convertToDbAvailability(_availability),
+        price: _price,
         photos: widget.vehicle.photos,
-        model: widget.vehicle.model, // Asegúrate de incluir el modelo también
+        description: _description,
       );
 
-      await VehicleRepository().updateVehicle(updatedVehicle);
-      Navigator.pop(context, true); // Devuelve true si se guardó con éxito
+      try {
+        final success = await VehicleRepository().updateVehicle(updatedVehicle);
+
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Vehículo actualizado correctamente')),
+          );
+          Navigator.pop(context, true);
+        }
+      } catch (e) {
+        print('Error al actualizar vehículo: $e');
+        _showErrorDialog('No se pudo actualizar el vehículo. Intenta nuevamente.');
+      }
     }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          )
+        ],
+      ),
+    );
   }
 
   @override
@@ -80,6 +113,7 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Editar Vehículo'),
+        backgroundColor: Colors.green,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -90,43 +124,28 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
               TextFormField(
                 initialValue: _brand,
                 decoration: const InputDecoration(labelText: 'Marca'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingresa la marca';
-                  }
-                  return null;
-                },
-                onChanged: (value) {
-                  _brand = value;
-                },
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Por favor ingresa la marca'
+                    : null,
+                onChanged: (value) => _brand = value,
               ),
               TextFormField(
                 initialValue: _description,
                 decoration: const InputDecoration(labelText: 'Descripción'),
-                onChanged: (value) {
-                  _description = value;
-                },
+                onChanged: (value) => _description = value,
               ),
               TextFormField(
                 initialValue: _price.toString(),
                 decoration: const InputDecoration(labelText: 'Precio'),
                 keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingresa el precio';
-                  }
-                  return null;
-                },
-                onChanged: (value) {
-                  _price = double.tryParse(value) ?? 0.0;
-                },
+                validator: (value) =>
+                value == null || value.isEmpty ? 'Por favor ingresa el precio' : null,
+                onChanged: (value) => _price = double.tryParse(value) ?? 0.0,
               ),
               TextFormField(
                 initialValue: _location,
                 decoration: const InputDecoration(labelText: 'Ubicación'),
-                onChanged: (value) {
-                  _location = value;
-                },
+                onChanged: (value) => _location = value,
               ),
               DropdownButtonFormField<String>(
                 value: _availability,
@@ -138,25 +157,24 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
                   );
                 }).toList(),
                 onChanged: (String? newValue) {
-                  setState(() {
-                    _availability = newValue!;
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor selecciona una disponibilidad';
+                  if (newValue != null) {
+                    setState(() => _availability = newValue);
                   }
-                  return null;
                 },
+                validator: (value) =>
+                value == null || value.isEmpty ? 'Selecciona una disponibilidad' : null,
               ),
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: _saveVehicle, // Guardar cambios
+                onPressed: _saveVehicle,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade300, // Color de fondo
+                  backgroundColor: Colors.green,
                   padding: const EdgeInsets.symmetric(vertical: 15.0),
                 ),
-                child: const Text('Actualizar vehículo', style: TextStyle(color: Colors.white)),
+                child: const Text(
+                  'Actualizar vehículo',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
             ],
           ),
@@ -165,4 +183,3 @@ class _EditVehiclePageState extends State<EditVehiclePage> {
     );
   }
 }
-

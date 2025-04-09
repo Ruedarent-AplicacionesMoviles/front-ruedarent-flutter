@@ -1,4 +1,4 @@
-import 'dart:async';
+/*import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -173,3 +173,4 @@ class DatabaseHelper {
     _database = null; // Restablecer la instancia de la base de datos
   }
 }
+*/

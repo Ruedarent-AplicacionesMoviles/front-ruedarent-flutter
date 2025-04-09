@@ -16,14 +16,18 @@ class _VehiclesPageState extends State<VehiclesPage> {
   @override
   void initState() {
     super.initState();
-    _loadVehicleTypes(); // Cargar los tipos de vehículos al iniciar la pantalla
+    _loadVehicleTypes();
   }
 
   Future<void> _loadVehicleTypes() async {
-    final data = await VehicleTypeRepository().getVehicleTypes();
-    setState(() {
-      vehicleTypes = data.map((e) => VehicleTypeModel.fromMap(e)).toList();
-    });
+    try {
+      final data = await VehicleTypeRepository().getVehicleTypes();
+      setState(() {
+        vehicleTypes = data;
+      });
+    } catch (e) {
+      print('Error al cargar tipos de vehículo: $e');
+    }
   }
 
   Future<void> _deleteVehicleType(int index) async {
@@ -34,31 +38,29 @@ class _VehiclesPageState extends State<VehiclesPage> {
     });
   }
 
-  // void _showDeleteDialog(BuildContext context, int index) {
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         title: const Text('¿Estás seguro de que deseas eliminar este tipo de vehículo?'),
-  //         actions: <Widget>[
-  //           TextButton(
-  //             child: const Text('Cancelar'),
-  //             onPressed: () {
-  //               Navigator.of(context).pop();
-  //             },
-  //           ),
-  //           TextButton(
-  //             child: const Text('Eliminar'),
-  //             onPressed: () {
-  //               _deleteVehicleType(index);
-  //               Navigator.of(context).pop();
-  //             },
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
+  void _showDeleteDialog(BuildContext context, int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('¿Estás seguro de que deseas eliminar este tipo de vehículo?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancelar'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text('Eliminar'),
+              onPressed: () {
+                _deleteVehicleType(index);
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -130,30 +132,27 @@ class _VehiclesPageState extends State<VehiclesPage> {
                                 ],
                               ),
                             ),
-                            // Column(
-                            //   children: [
-                            //     IconButton(
-                            //       icon: const Icon(Icons.delete, color: Colors.green),
-                            //       onPressed: () {
-                            //         _showDeleteDialog(context, index);
-                            //       },
-                            //     ),
-                            //     IconButton(
-                            //       icon: const Icon(Icons.edit, color: Colors.green),
-                            //       onPressed: () async {
-                            //         final result = await Navigator.pushNamed(
-                            //           context,
-                            //           '/edit-category-vehicle',
-                            //           arguments: vehicleTypes[index],
-                            //         );
-                            //
-                            //         if (result == true) {
-                            //           _loadVehicleTypes();
-                            //         }
-                            //       },
-                            //     ),
-                            //   ],
-                            // ),
+                            Column(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit, color: Colors.green),
+                                  onPressed: () async {
+                                    final result = await Navigator.pushNamed(
+                                      context,
+                                      '/edit-category-vehicle',
+                                      arguments: vehicleTypes[index],
+                                    );
+                                    if (result == true) {
+                                      _loadVehicleTypes();
+                                    }
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () => _showDeleteDialog(context, index),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
@@ -162,38 +161,29 @@ class _VehiclesPageState extends State<VehiclesPage> {
                 },
               ),
             ),
-            // ElevatedButton(
-            //   onPressed: () async {
-            //     final result = await Navigator.pushNamed(context, '/add-category-vehicle');
-            //     if (result == true) {
-            //       _loadVehicleTypes();
-            //     }
-            //   },
-            //   child: const Text('AGREGAR +'),
-            //   style: ElevatedButton.styleFrom(
-            //     backgroundColor: Colors.green,
-            //     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            //     textStyle: const TextStyle(fontSize: 18),
-            //   ),
-            // ),
+            ElevatedButton(
+              onPressed: () async {
+                final result = await Navigator.pushNamed(context, '/add-category-vehicle');
+                if (result == true) {
+                  _loadVehicleTypes();
+                }
+              },
+              child: const Text('AGREGAR +'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                textStyle: const TextStyle(fontSize: 18),
+              ),
+            ),
           ],
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 1,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.star_border),
-            label: 'Favoritos',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.directions_car),
-            label: 'Vehículos',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: 'Perfil',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.star_border), label: 'Favoritos'),
+          BottomNavigationBarItem(icon: Icon(Icons.directions_car), label: 'Vehículos'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Perfil'),
         ],
       ),
     );

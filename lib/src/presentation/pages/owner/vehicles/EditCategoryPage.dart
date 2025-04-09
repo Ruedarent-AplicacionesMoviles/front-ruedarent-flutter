@@ -3,9 +3,9 @@ import 'package:front_ruedarent_flutter/src/data/models/vehicle_type_model.dart'
 import 'package:front_ruedarent_flutter/src/data/repositories/vehicle_type_repository.dart';
 
 class EditCategoryPage extends StatefulWidget {
-  final VehicleTypeModel vehicleType; // El vehículo a editar
+  final VehicleTypeModel vehicleType;
 
-  EditCategoryPage({Key? key, required this.vehicleType}) : super(key: key);
+  const EditCategoryPage({Key? key, required this.vehicleType}) : super(key: key);
 
   @override
   _EditCategoryPageState createState() => _EditCategoryPageState();
@@ -19,10 +19,9 @@ class _EditCategoryPageState extends State<EditCategoryPage> {
   @override
   void initState() {
     super.initState();
-    // Cargar los valores iniciales de los controladores
-    _nameController.text = widget.vehicleType.name; // Cargar el nombre
-    _infoController.text = widget.vehicleType.info!; // Cargar la info
-    _imageController.text = widget.vehicleType.image!; // Cargar la imagen
+    _nameController.text = widget.vehicleType.name;
+    _infoController.text = widget.vehicleType.info ?? '';
+    _imageController.text = widget.vehicleType.image ?? '';
   }
 
   @override
@@ -30,14 +29,14 @@ class _EditCategoryPageState extends State<EditCategoryPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Editar Categoría'),
+        backgroundColor: Colors.green,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Mostrar la imagen en la parte superior
             Image.network(
-              widget.vehicleType.image!,
+              _imageController.text,
               height: 200,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
@@ -59,42 +58,17 @@ class _EditCategoryPageState extends State<EditCategoryPage> {
             TextField(
               controller: _imageController,
               decoration: const InputDecoration(labelText: 'Ruta de la imagen'),
+              onChanged: (_) => setState(() {}), // Actualiza la imagen al escribir
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () async {
-                // Validar que los campos no estén vacíos
-                if (_nameController.text.isEmpty ||
-                    _infoController.text.isEmpty ||
-                    _imageController.text.isEmpty) {
-                  _showErrorDialog(context, 'Todos los campos son obligatorios');
-                  return;
-                }
-
-                // Crear el mapa de datos para actualizar
-                final updatedCategory = {
-                  'id': widget.vehicleType.id, // Preservar el ID
-                  'name': _nameController.text,
-                  'info': _infoController.text,
-                  'image': _imageController.text,
-                };
-
-                try {
-                  // Actualizar la categoría usando el repositorio
-                  await VehicleTypeRepository().updateVehicleType(updatedCategory, widget.vehicleType.id!);
-
-                  // Volver a la pantalla anterior y actualizar la lista
-                  Navigator.pop(context, true);
-                } catch (e) {
-                  _showErrorDialog(context, 'Hubo un error al actualizar la categoría');
-                }
-              },
-              child: const Text('Actualizar'),
+              onPressed: _updateCategory,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 textStyle: const TextStyle(fontSize: 18),
               ),
+              child: const Text('Actualizar'),
             ),
           ],
         ),
@@ -102,24 +76,43 @@ class _EditCategoryPageState extends State<EditCategoryPage> {
     );
   }
 
-  // Método para mostrar un cuadro de diálogo con un mensaje de error
-  void _showErrorDialog(BuildContext context, String message) {
+  Future<void> _updateCategory() async {
+    if (_nameController.text.isEmpty ||
+        _infoController.text.isEmpty ||
+        _imageController.text.isEmpty) {
+      _showErrorDialog('Todos los campos son obligatorios');
+      return;
+    }
+
+    final updatedCategory = VehicleTypeModel(
+      id: widget.vehicleType.id,
+      name: _nameController.text,
+      info: _infoController.text,
+      image: _imageController.text,
+    );
+
+    try {
+      await VehicleTypeRepository().updateVehicleType(updatedCategory);
+      Navigator.pop(context, true); // Éxito
+    } catch (e) {
+      print('Error al actualizar categoría: $e');
+      _showErrorDialog('Hubo un error al actualizar la categoría');
+    }
+  }
+
+  void _showErrorDialog(String message) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Error'),
-          content: Text(message),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
+      builder: (_) => AlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
     );
   }
 }

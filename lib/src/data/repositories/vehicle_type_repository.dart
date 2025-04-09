@@ -1,92 +1,101 @@
-import 'package:sqflite/sqflite.dart';
-import '../database/database_helper.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../api_constants.dart';
 import '../models/vehicle_type_model.dart';
 
 class VehicleTypeRepository {
-  final DatabaseHelper _databaseHelper = DatabaseHelper();
+  final String _host = ApiConstants.host;
+  final String _path = '/vehicle_type.php';
 
-  // Insertar un nuevo tipo de vehículo (categoría)
-  Future<int> insertVehicleType(Map<String, dynamic> vehicleType) async {
-    final db = await _databaseHelper.database;
-    return await db.insert(
-      'VehicleType',
-      vehicleType,
-      conflictAlgorithm: ConflictAlgorithm.replace, // Reemplaza si ya existe un conflicto
+  // Obtener todos los tipos de vehículos
+  Future<List<VehicleTypeModel>> getVehicleTypes() async {
+    final response = await http.get(Uri.parse("$_host$_path"));
+
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+      return data.map((e) => VehicleTypeModel.fromMap(e)).toList();
+    } else {
+      throw Exception('Error al obtener tipos de vehículo: ${response.body}');
+    }
+  }
+
+  // Insertar un nuevo tipo de vehículo
+  Future<int> insertVehicleType(VehicleTypeModel vehicleType) async {
+    final response = await http.post(
+      Uri.parse("$_host$_path"),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(vehicleType.toMap()),
     );
+
+    if (response.statusCode == 201) {
+      final data = jsonDecode(response.body);
+      return data['id'];
+    } else {
+      throw Exception('Error al crear tipo de vehículo: ${response.body}');
+    }
   }
 
-  // Obtener todos los tipos de vehículos (categorías) de la base de datos
-  Future<List<Map<String, dynamic>>> getVehicleTypes() async {
-    final db = await _databaseHelper.database;
-    return await db.query('VehicleType');
-  }
-
-  // Actualizar un tipo de vehículo (categoría) en la base de datos
-  Future<int> updateVehicleType(Map<String, dynamic> vehicleType, int id) async {
-    final db = await _databaseHelper.database;
-    return await db.update(
-      'VehicleType',
-      vehicleType,
-      where: 'id = ?',
-      whereArgs: [id],
+  // Actualizar un tipo de vehículo
+  Future<void> updateVehicleType(VehicleTypeModel vehicleType) async {
+    final response = await http.put(
+      Uri.parse("$_host$_path"),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(vehicleType.toMap()),
     );
+
+    if (response.statusCode != 200) {
+      throw Exception('Error al actualizar tipo de vehículo: ${response.body}');
+    }
   }
 
-  // Eliminar un tipo de vehículo (categoría) de la base de datos
-  Future<int> deleteVehicleType(int id) async {
-    final db = await _databaseHelper.database;
-    return await db.delete(
-      'VehicleType',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+  // Eliminar un tipo de vehículo por ID
+  Future<void> deleteVehicleType(int id) async {
+    final response = await http.delete(Uri.parse("$_host$_path?id=$id"));
+
+    if (response.statusCode != 200) {
+      throw Exception('Error al eliminar tipo de vehículo: ${response.body}');
+    }
   }
 
-  // Obtener un tipo de vehículo por ID
+  // Obtener tipo por ID
   Future<VehicleTypeModel?> getVehicleTypeById(int id) async {
-    final db = await _databaseHelper.database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'VehicleType',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    final response = await http.get(Uri.parse("$_host$_path?id=$id"));
 
-    if (maps.isNotEmpty) {
-      return VehicleTypeModel.fromMap(maps.first);
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+      return data.isNotEmpty ? VehicleTypeModel.fromMap(data[0]) : null;
+    } else {
+      throw Exception('Error al obtener tipo por ID: ${response.body}');
     }
-    return null;  // Retorna null si no encuentra el tipo de vehículo
   }
 
-  // Obtener un tipo de vehículo por nombre
+  // Obtener tipo por nombre
   Future<VehicleTypeModel?> getVehicleTypeByName(String name) async {
-    final db = await _databaseHelper.database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'VehicleType',
-      where: 'name = ?',
-      whereArgs: [name],
-    );
+    final response = await http.get(Uri.parse("$_host$_path?name=$name"));
 
-    if (maps.isNotEmpty) {
-      return VehicleTypeModel.fromMap(maps.first);
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+      return data.isNotEmpty ? VehicleTypeModel.fromMap(data[0]) : null;
+    } else {
+      throw Exception('Error al obtener tipo por nombre: ${response.body}');
     }
-    return null;  // Retorna null si no encuentra el tipo de vehículo
   }
 
-  // Obtener el ID del tipo de vehículo por nombre
+  // Obtener ID por nombre
   Future<int> getVehicleTypeIdByName(String name) async {
-    final vehicleType = await getVehicleTypeByName(name);
-    return vehicleType?.id ?? -1; // Retorna el ID o -1 si no se encuentra
+    final type = await getVehicleTypeByName(name);
+    return type?.id ?? -1;
   }
 
-  // Verificar si existe un tipo de vehículo por nombre
+  // Verificar si existe un tipo por nombre
   Future<bool> existsVehicleTypeByName(String name) async {
-    final db = await _databaseHelper.database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'VehicleType',
-      where: 'name = ?',
-      whereArgs: [name],
-    );
+    final response = await http.get(Uri.parse("$_host$_path?name=$name"));
 
-    return maps.isNotEmpty; // Retorna true si existe, false si no
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+      return data.isNotEmpty;
+    } else {
+      throw Exception('Error al verificar existencia: ${response.body}');
+    }
   }
 }

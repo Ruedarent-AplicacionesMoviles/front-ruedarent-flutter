@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+
+import 'package:front_ruedarent_flutter/src/data/UserProvider.dart';
 import 'package:front_ruedarent_flutter/src/data/models/address_model.dart';
+import 'package:front_ruedarent_flutter/src/data/models/reservation_model.dart';
+import 'package:front_ruedarent_flutter/src/data/models/vehicle_model.dart';
+import 'package:front_ruedarent_flutter/src/data/repositories/reservation_repository.dart';
 import 'package:front_ruedarent_flutter/src/presentation/pages/renter/payment/PaymentConfirmationPage.dart';
 
 class PaymentPage extends StatefulWidget {
   final AddressModel address;
+  final VehicleModel vehicle;
 
-  const PaymentPage({Key? key, required this.address}) : super(key: key);
+  const PaymentPage({Key? key, required this.address, required this.vehicle}) : super(key: key);
 
   @override
   _PaymentPageState createState() => _PaymentPageState();
@@ -14,6 +21,7 @@ class PaymentPage extends StatefulWidget {
 
 class _PaymentPageState extends State<PaymentPage> {
   final _formKey = GlobalKey<FormState>();
+  final ReservationRepository _reservationRepository = ReservationRepository();
 
   final TextEditingController _cardNumberController = TextEditingController();
   final TextEditingController _securityCodeController = TextEditingController();
@@ -27,6 +35,43 @@ class _PaymentPageState extends State<PaymentPage> {
   final List<String> _years = List.generate(10, (index) => (DateTime.now().year + index).toString().substring(2));
   final List<String> _installments = ['1 cuota', '2 cuotas', '3 cuotas', '4 cuotas'];
 
+  Future<void> _processPayment() async {
+    final userProvider = context.read<UserProvider>();
+
+    ReservationModel reservation = ReservationModel(
+      renterId: userProvider.userId!,
+      vehicleId: widget.vehicle.id!,
+      startDate: DateTime.now(),
+      endDate: DateTime.now().add(const Duration(days: 7)),
+      pickupLocation: widget.address.direccion,
+      dropoffLocation: widget.address.direccion,
+      reservationStatus: 'confirmed',
+      totalPrice: widget.vehicle.price,
+      paymentMethod: 'card',
+    );
+
+    try {
+      await _reservationRepository.createReservation(reservation);
+
+      String cardType = 'master';
+      String lastDigits = _cardNumberController.text.substring(_cardNumberController.text.length - 4);
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentConfirmationPage(
+            cardType: cardType,
+            lastDigits: lastDigits,
+          ),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al procesar el pago: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,171 +83,72 @@ class _PaymentPageState extends State<PaymentPage> {
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: ListView(
             children: [
-              const Text(
-                'Detalles del pago',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
+              const Text('Detalles del pago', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
-              Text(
-                'Dirección de envío: ${widget.address.direccion}, ${widget.address.distrito}',
-                style: const TextStyle(fontSize: 16),
-              ),
+              Text('Dirección: ${widget.address.direccion}, ${widget.address.distrito}', style: const TextStyle(fontSize: 16)),
               const SizedBox(height: 30),
-              // Campo para el número de tarjeta
               TextFormField(
                 controller: _cardNumberController,
-                decoration: const InputDecoration(
-                  labelText: 'Número de tarjeta',
-                ),
+                decoration: const InputDecoration(labelText: 'Número de tarjeta'),
                 keyboardType: TextInputType.number,
                 maxLength: 16,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, ingrese el número de tarjeta';
-                  } else if (value.length != 16) {
-                    return 'El número de tarjeta debe tener 16 dígitos';
-                  }
-                  return null;
-                },
+                validator: (value) => value == null || value.length != 16 ? 'Debe tener 16 dígitos' : null,
               ),
-              const SizedBox(height: 10),
-              // Dropdown para mes y año de expiración
               Row(
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       value: _selectedMonth,
-                      decoration: const InputDecoration(labelText: 'Mes de expiración (MM)'),
-                      items: _months.map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                      onChanged: (newValue) {
-                        setState(() {
-                          _selectedMonth = newValue;
-                        });
-                      },
-                      validator: (value) {
-                        if (value == null) {
-                          return 'Selecciona el mes';
-                        }
-                        return null;
-                      },
+                      decoration: const InputDecoration(labelText: 'Mes (MM)'),
+                      items: _months.map((val) => DropdownMenuItem(value: val, child: Text(val))).toList(),
+                      onChanged: (val) => setState(() => _selectedMonth = val),
+                      validator: (val) => val == null ? 'Selecciona mes' : null,
                     ),
                   ),
                   const SizedBox(width: 20),
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       value: _selectedYear,
-                      decoration: const InputDecoration(labelText: 'Año de expiración (YY)'),
-                      items: _years.map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                      onChanged: (newValue) {
-                        setState(() {
-                          _selectedYear = newValue;
-                        });
-                      },
-                      validator: (value) {
-                        if (value == null) {
-                          return 'Selecciona el año';
-                        }
-                        return null;
-                      },
+                      decoration: const InputDecoration(labelText: 'Año (YY)'),
+                      items: _years.map((val) => DropdownMenuItem(value: val, child: Text(val))).toList(),
+                      onChanged: (val) => setState(() => _selectedYear = val),
+                      validator: (val) => val == null ? 'Selecciona año' : null,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 10),
-              // Campo para el código de seguridad
               TextFormField(
                 controller: _securityCodeController,
-                decoration: const InputDecoration(
-                  labelText: 'Código de seguridad',
-                ),
+                decoration: const InputDecoration(labelText: 'Código de seguridad'),
                 keyboardType: TextInputType.number,
                 maxLength: 4,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Ingresa el código de seguridad';
-                  } else if (value.length < 3 || value.length > 4) {
-                    return 'El código debe tener 3 o 4 dígitos';
-                  }
-                  return null;
-                },
+                validator: (value) => value == null || value.length < 3 ? 'Código inválido' : null,
               ),
               const SizedBox(height: 10),
-              // Campo para el nombre del titular
               TextFormField(
                 controller: _cardHolderNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre del titular',
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, ingresa el nombre del titular';
-                  }
-                  return null;
-                },
+                decoration: const InputDecoration(labelText: 'Nombre del titular'),
+                validator: (value) => value == null || value.isEmpty ? 'Campo requerido' : null,
               ),
               const SizedBox(height: 20),
-              // Dropdown para número de cuotas
               DropdownButtonFormField<String>(
                 value: _selectedInstallments,
-                decoration: const InputDecoration(labelText: 'Número de cuotas'),
-                items: _installments.map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-                onChanged: (newValue) {
-                  setState(() {
-                    _selectedInstallments = newValue;
-                  });
-                },
-                validator: (value) {
-                  if (value == null) {
-                    return 'Selecciona el número de cuotas';
-                  }
-                  return null;
-                },
+                decoration: const InputDecoration(labelText: 'Cuotas'),
+                items: _installments.map((val) => DropdownMenuItem(value: val, child: Text(val))).toList(),
+                onChanged: (val) => setState(() => _selectedInstallments = val),
+                validator: (val) => val == null ? 'Selecciona cuotas' : null,
               ),
               const SizedBox(height: 30),
-              // Botón para confirmar el pago
               Center(
                 child: ElevatedButton.icon(
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
-                      // Procesamiento del pago (simulación)
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Procesando pago...')),
-                      );
-
-                      // Simulación del tipo de tarjeta y los últimos 4 dígitos
-                      String cardType = 'master';
-                      String lastDigits = _cardNumberController.text.substring(_cardNumberController.text.length - 4);
-
-                      // Navegar a la página de confirmación
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => PaymentConfirmationPage(
-                            cardType: cardType,
-                            lastDigits: lastDigits,
-                          ),
-                        ),
-                      );
+                      _processPayment();
                     }
                   },
                   icon: const Icon(Icons.check),

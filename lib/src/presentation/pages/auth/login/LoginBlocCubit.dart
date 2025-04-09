@@ -6,12 +6,10 @@ import '../../../../data/repositories/user_repository.dart';
 import 'LoginBlocState.dart';
 
 class LoginBlocCubit extends Cubit<LoginBlocState> {
-
   final UserRepository _userRepository;
   final UserProvider _userProvider;
 
   LoginBlocCubit(this._userRepository, this._userProvider) : super(LoginInitial());
-
 
   final _emailController = BehaviorSubject<String>();
   final _passwordController = BehaviorSubject<String>();
@@ -20,9 +18,10 @@ class LoginBlocCubit extends Cubit<LoginBlocState> {
   Stream<String> get passwordStream => _passwordController.stream;
 
   void changeEmail(String email) {
-    RegExp emailRegExp = RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
-    if (email.length < 3) {
-      _emailController.sink.addError('El email debe tener más de 3 caracteres');
+    final emailRegExp = RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+
+    if (email.trim().isEmpty) {
+      _emailController.sink.addError('Por favor ingrese su email');
     } else if (!emailRegExp.hasMatch(email)) {
       _emailController.sink.addError('El email debe ser válido');
     } else {
@@ -31,8 +30,10 @@ class LoginBlocCubit extends Cubit<LoginBlocState> {
   }
 
   void changePassword(String password) {
-    if (password.length < 6) {
-      _passwordController.sink.addError('Al menos 6 caracteres');
+    if (password.trim().isEmpty) {
+      _passwordController.sink.addError('Por favor ingrese su contraseña');
+    } else if (password.length < 6) {
+      _passwordController.sink.addError('Debe tener al menos 6 caracteres');
     } else {
       _passwordController.sink.add(password);
     }
@@ -44,38 +45,37 @@ class LoginBlocCubit extends Cubit<LoginBlocState> {
         (email, password) => true,
   );
 
-  // Método para login
+  // Método de login real
   Future<void> login({bool isTestUser = false}) async {
     try {
       emit(LoginLoading());
 
       if (isTestUser) {
-        UserModel testUser = UserModel(
+        final testUser = UserModel(
+          id: 1,
           name: 'Test User',
           email: 'testuser@domain.com',
-          password: 'Password123!',
+          password: '',
           userType: 'owner',
           notificationPreferences: 'all',
         );
         emit(LoginSuccess(testUser));
-        _userProvider.setUserId(testUser.id!); //
+        _userProvider.setUserId(testUser.id!);
         return;
       }
 
       final email = _emailController.value.trim();
       final password = _passwordController.value.trim();
 
-      UserModel? user = await _userRepository.getUserByEmail(email);
-      if (user == null || user.password != password) {
-        emit(LoginError('Correo o contraseña incorrectos.'));
-      } else {
-        emit(LoginSuccess(user));
-        _userProvider.setUserId(user.id!);
-      }
+      final user = await _userRepository.loginUser(email, password);
+
+      emit(LoginSuccess(user));
+      _userProvider.setUserId(user.id!);
     } catch (e) {
-      emit(LoginError('Error al iniciar sesión: $e'));
+      emit(LoginError('Correo o contraseña incorrectos'));
     }
   }
+
   @override
   Future<void> close() {
     _emailController.close();

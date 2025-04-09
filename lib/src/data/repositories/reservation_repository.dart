@@ -1,106 +1,70 @@
 // src/data/repositories/reservation_repository.dart
 
-import 'package:sqflite/sqflite.dart';
-import '../database/database_helper.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../models/reservation_model.dart';
+import '../api_constants.dart';
 
 class ReservationRepository {
-  final DatabaseHelper _databaseHelper = DatabaseHelper();
+  final String _host = ApiConstants.host;
+  final String _path = '/reservations.php';
 
-  // Insertar una nueva reserva
-  Future<int> insertReservation(ReservationModel reservation) async {
-    final db = await _databaseHelper.database;
-    return await db.insert(
-      'Reservation',
-      reservation.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-  }
+  // Crear una nueva reserva
+  Future<int> createReservation(ReservationModel reservation) async {
+    final uri = Uri.parse("$_host$_path");
 
-  Future<List<ReservationModel>> getReservationsByUserId(int userId) async {
-    final db = await _databaseHelper.database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'Reservation',
-      where: 'renterId = ?',
-      whereArgs: [userId],
+    final response = await http.post(
+      uri,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(reservation.toMap()),
     );
 
-    return List.generate(maps.length, (i) {
-      return ReservationModel.fromMap(maps[i]);
-    });
-  }
-
-  // Obtener una reserva por ID
-  Future<ReservationModel?> getReservationById(int id) async {
-    final db = await _databaseHelper.database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'Reservation',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-
-    if (maps.isNotEmpty) {
-      return ReservationModel.fromMap(maps.first);
+    if (response.statusCode == 201) {
+      final data = jsonDecode(response.body);
+      return data['id'];
+    } else {
+      throw Exception("Error al crear la reserva: ${response.body}");
     }
-    return null;
   }
 
-  // Obtener todas las reservas
-  Future<List<ReservationModel>> getAllReservations() async {
-    final db = await _databaseHelper.database;
-    final List<Map<String, dynamic>> maps = await db.query('Reservation');
+  // Obtener reservas por ID de usuario (renterId)
+  Future<List<ReservationModel>> getReservationsByUserId(int userId) async {
+    final uri = Uri.parse('$_host$_path?renterId=$userId');
+    final response = await http.get(uri);
 
-    return List.generate(maps.length, (i) {
-      return ReservationModel.fromMap(maps[i]);
-    });
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return List<ReservationModel>.from(data.map((e) => ReservationModel.fromMap(e)));
+    } else {
+      throw Exception("Error al obtener reservas: ${response.body}");
+    }
   }
 
-  // Actualizar una reserva
-  Future<int> updateReservation(ReservationModel reservation) async {
-    final db = await _databaseHelper.database;
-    return await db.update(
-      'Reservation',
-      reservation.toMap(),
-      where: 'id = ?',
-      whereArgs: [reservation.id],
-    );
+  // Eliminar reserva
+  Future<bool> deleteReservation(int id) async {
+    final uri = Uri.parse('$_host$_path?id=$id');
+    final response = await http.delete(uri);
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception("Error al eliminar reserva: ${response.body}");
+    }
   }
 
-  // Eliminar una reserva
-  Future<int> deleteReservation(int? id) async {
-    final db = await _databaseHelper.database;
-    return await db.delete(
-      'Reservation',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
-
-  // Obtener reservas por rentador
-  Future<List<ReservationModel>> getReservationsByRenter(int renterId) async {
-    final db = await _databaseHelper.database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'Reservation',
-      where: 'renterId = ?',
-      whereArgs: [renterId],
+  // (Opcional) Actualizar reserva
+  Future<bool> updateReservation(ReservationModel reservation) async {
+    final uri = Uri.parse('$_host$_path');
+    final response = await http.put(
+      uri,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(reservation.toMap()),
     );
 
-    return List.generate(maps.length, (i) {
-      return ReservationModel.fromMap(maps[i]);
-    });
-  }
-
-  // Obtener reservas por vehículo
-  Future<List<ReservationModel>> getReservationsByVehicle(int vehicleId) async {
-    final db = await _databaseHelper.database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'Reservation',
-      where: 'vehicleId = ?',
-      whereArgs: [vehicleId],
-    );
-
-    return List.generate(maps.length, (i) {
-      return ReservationModel.fromMap(maps[i]);
-    });
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception("Error al actualizar reserva: ${response.body}");
+    }
   }
 }

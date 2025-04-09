@@ -14,10 +14,11 @@ class AddCategoryPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Agregar Categoría'),
+        backgroundColor: Colors.green,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView( // Permite el desplazamiento si el contenido es largo
+        child: SingleChildScrollView(
           child: Column(
             children: [
               TextField(
@@ -35,7 +36,6 @@ class AddCategoryPage extends StatelessWidget {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
-                  // Validar que los campos no estén vacíos
                   if (_nameController.text.isEmpty ||
                       _infoController.text.isEmpty ||
                       _imageController.text.isEmpty) {
@@ -43,7 +43,6 @@ class AddCategoryPage extends StatelessWidget {
                     return;
                   }
 
-                  // Crear una instancia de VehicleTypeModel
                   final newCategory = VehicleTypeModel(
                     name: _nameController.text,
                     info: _infoController.text,
@@ -51,22 +50,26 @@ class AddCategoryPage extends StatelessWidget {
                   );
 
                   try {
-                    // Insertar la nueva categoría utilizando el repositorio
-                    await VehicleTypeRepository().insertVehicleType(newCategory.toMap());
-                    // Volver a la pantalla anterior y actualizar la lista
+                    /// ✅ Llama al método actualizado que se conecta al backend
+                    await VehicleTypeRepository().insertVehicleType(newCategory);
+
+                    // Mostrar confirmación
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Categoría guardada exitosamente')),
+                    );
+
+                    // Volver y notificar éxito
                     Navigator.pop(context, true);
                   } catch (e) {
-                    // Imprimir el error exacto para depurar
                     print('Error al guardar la categoría: $e');
                     _showErrorDialog(context, 'Hubo un error al guardar la categoría');
                   }
                 },
-                child: const Text('Guardar'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  textStyle: const TextStyle(fontSize: 18),
                 ),
+                child: const Text('Guardar'),
               ),
             ],
           ),
@@ -75,7 +78,6 @@ class AddCategoryPage extends StatelessWidget {
     );
   }
 
-  // Método para mostrar un cuadro de diálogo con un mensaje de error
   void _showErrorDialog(BuildContext context, String message) {
     showDialog(
       context: context,
@@ -83,12 +85,10 @@ class AddCategoryPage extends StatelessWidget {
         return AlertDialog(
           title: const Text('Error'),
           content: Text(message),
-          actions: <Widget>[
+          actions: [
             TextButton(
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
             ),
           ],
         );

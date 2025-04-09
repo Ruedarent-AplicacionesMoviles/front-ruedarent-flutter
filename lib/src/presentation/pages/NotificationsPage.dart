@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:front_ruedarent_flutter/src/data/models/notification_model.dart';
 import 'package:front_ruedarent_flutter/src/data/repositories/notification_repository.dart';
+import 'package:provider/provider.dart';
+import 'package:front_ruedarent_flutter/src/data/UserProvider.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({Key? key}) : super(key: key);
@@ -12,51 +14,57 @@ class NotificationsPage extends StatefulWidget {
 class _NotificationsPageState extends State<NotificationsPage> {
   List<NotificationModel> notifications = [];
   final NotificationRepository _notificationRepository = NotificationRepository();
+  late final int _userId;
 
   @override
   void initState() {
     super.initState();
+    _userId = context.read<UserProvider>().userId!;
     _loadNotifications();
   }
 
   Future<void> _loadNotifications() async {
-    // Ejemplo de notificaciones simuladas
-    notifications = [
-      NotificationModel(
-        id: 1,
-        userId: 1,
-        notificationType: 'Reservación Nueva',
-        content: 'Tienes una nueva reservación.',
-        timestamp: DateTime.now(),
-        read: false,
-      ),
-      NotificationModel(
-        id: 2,
-        userId: 1,
-        notificationType: 'Cambio de Reservación',
-        content: 'Una de tus reservaciones ha sido actualizada.',
-        timestamp: DateTime.now().subtract(Duration(hours: 2)),
-        read: true,
-      ),
-      NotificationModel(
-        id: 3,
-        userId: 1,
-        notificationType: 'Recordatorio',
-        content: 'No olvides confirmar tu reservación.',
-        timestamp: DateTime.now().subtract(Duration(days: 1)),
-        read: false,
-      ),
-    ];
-
-    setState(() {});
+    try {
+      final data = await _notificationRepository.getNotificationsByUser(_userId);
+      setState(() {
+        notifications = data;
+      });
+    } catch (e) {
+      print('Error al cargar notificaciones: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al cargar notificaciones')),
+      );
+    }
   }
 
-
   Future<void> _deleteNotification(int notificationId, int index) async {
-    await _notificationRepository.deleteNotification(notificationId);
-    setState(() {
-      notifications.removeAt(index);
-    });
+    try {
+      await _notificationRepository.deleteNotification(notificationId);
+      setState(() {
+        notifications.removeAt(index);
+      });
+    } catch (e) {
+      print('Error al eliminar notificación: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al eliminar notificación')),
+      );
+    }
+  }
+
+  Future<void> _markAsRead(NotificationModel notification, int index) async {
+    if (notification.read) return;
+
+    try {
+      await _notificationRepository.markAsRead(notification.id!);
+      setState(() {
+        notifications[index] = notification.copyWith(read: true);
+      });
+    } catch (e) {
+      print('Error al marcar como leída: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al marcar como leída')),
+      );
+    }
   }
 
   @override
@@ -84,10 +92,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               color: Colors.red,
               padding: const EdgeInsets.symmetric(horizontal: 20),
               alignment: Alignment.centerRight,
-              child: const Icon(
-                Icons.delete,
-                color: Colors.white,
-              ),
+              child: const Icon(Icons.delete, color: Colors.white),
             ),
             child: Card(
               margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -98,6 +103,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   notification.read ? Icons.done : Icons.markunread,
                   color: notification.read ? Colors.green : Colors.grey,
                 ),
+                onTap: () => _markAsRead(notification, index),
               ),
             ),
           );
